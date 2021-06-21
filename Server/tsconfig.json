@@ -5,6 +5,11 @@
         "rootDir": "./",
         "outDir": "./build",
         "esModuleInterop": true,
-        "strict": true
+        "strict": true,
+        "strictPropertyInitialization": true,
+        "strictNullChecks": true,
+        "strictBindCallApply": true,
+        "strictFunctionTypes": true,
+        "experimentalDecorators": true,
     }
 }

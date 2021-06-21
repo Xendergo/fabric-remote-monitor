@@ -1,10 +1,10 @@
 {
   "required": true,
-  "package": "fabric_remote_monitor.mixin",
-  "compatibilityLevel": "JAVA_8",
-  "mixins": [],
-  "client": [],
-  "server": [],
+  "package": "fabric_remote_monitor.mixins",
+  "compatibilityLevel": "JAVA_16",
+  "mixins": [
+    "MinecraftServerMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

@@ -1,10 +1,15 @@
 package fabric_remote_monitor;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.server.MinecraftServer;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import fabric_remote_monitor.fakes.MinecraftServerInterface;
 
 public class FabricRemoteMonitor implements ModInitializer {
 
@@ -17,10 +22,31 @@ public class FabricRemoteMonitor implements ModInitializer {
     public void onInitialize() {
         log(Level.INFO, "Initializing");
         //TODO: Initializer
+
+        ServerLifecycleEvents.SERVER_STARTED.register((MinecraftServer server) -> {
+            log(Level.INFO, "YEEEE");
+
+            MinecraftServerInterface serverAdditions = (MinecraftServerInterface)server;
+
+            serverAdditions.constructServerInterface();
+
+            ServerInterface serverInterface = serverAdditions.getServerInterface();
+
+            NbtCompound testData = new NbtCompound();
+
+            testData.putString("thingy1", "consumes cheese");
+            testData.putFloat("thingy2", 0.7F);
+            testData.putByteArray("thimngy3", new byte[] {1, 2, 3, 2, 1});
+
+            serverInterface.SendMessage("test", testData);
+        });
+
+        ServerLifecycleEvents.SERVER_STOPPING.register((MinecraftServer server) -> {
+            ((MinecraftServerInterface) server).getServerInterface().Close();
+        });
     }
 
     public static void log(Level level, String message){
-        LOGGER.log(level, "["+MOD_NAME+"] " + message);
+        LOGGER.log(level, "[{}] {}", MOD_NAME, message);
     }
-
 }
