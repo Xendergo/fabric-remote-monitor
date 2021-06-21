@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "fabric-remote-monitor",
+  "version": "${version}",
+  "name": "fabric-remote-monitor",
+  "description": "Monitor and configure your minecraft server from a nice webpage, also includes some other cool features like including a discord bot",
+  "authors": [
+    "Xendergo"
+  ],
+  "contributors": [],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/fabric-remote-monitor/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "fabric_remote_monitor.FabricRemoteMonitor"
+    ],
+    "client": [],
+    "server": []
+  },
+  "mixins": [
+    "fabric-remote-monitor.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.11.6",
+    "fabric": "*"
+  }
+}
