@@ -1,18 +1,28 @@
-export function read(data: Buffer): { [index: string]: TagType } {
+export function read(data: Buffer): Map<string, TagType> {
     let id = data[0]
 
     let len = data.readUInt16BE(1)
     
     let name = data.toString("utf-8", 2, len)
 
-    let ret: { [index: string]: TagType } = {}
+    let ret: Map<string, TagType> = new Map()
 
-    ret[name] = tagTypes.get(id)!.parse(data.slice(3 + len))
+    ret.set(name, tagTypes.get(id)!.parse(data.slice(3 + len))[0])
 
-    return (ret[""] as { [index: string]: TagType })[0] as { [index: string]: TagType }
+    return ret.get("") as Map<string, TagType>
 }
 
-export type TagType = number | bigint | number[] | string | TagType[] | { [index: string]: TagType }
+export type TagType = int | float | int[] | string | TagType[] | Map<string, TagType>
+
+interface int {
+    value: bigint
+    type: "byte" | "short" | "int" | "long"
+}
+
+interface float {
+    value: number
+    type: "float" | "double"
+}
 
 interface TagParser {
     parse(data: Buffer): [TagType, number]
@@ -28,55 +38,76 @@ function tagType(id: number) {
 
 @tagType(1)
 class ByteParser {
-    parse(data: Buffer): [number, number] {
-        return [data[0], 1]
+    parse(data: Buffer): [int, number] {
+        return [{
+            value: BigInt(data[0]),
+            type: "byte"
+        }, 1]
     }
 }
 
 @tagType(2)
 class ShortParser {
-    parse(data: Buffer): [number, number] {
-        return [data.readInt16BE(), 2]
+    parse(data: Buffer): [int, number] {
+        return [{
+            value: BigInt(data.readInt16BE()),
+            type: "short",
+        }, 2]
     }
 }
 
 @tagType(3)
 class IntParser {
-    parse(data: Buffer): [number, number] {
-        return [data.readInt32BE(), 4]
+    parse(data: Buffer): [int, number] {
+        return [{
+            value: BigInt(data.readInt32BE()),
+            type: "int",
+        }, 4]
     }
 }
 
 @tagType(4)
 class LongParser {
-    parse(data: Buffer): [bigint, number] {
-        return [data.readBigInt64BE(), 8]
+    parse(data: Buffer): [int, number] {
+        return [{
+            value: data.readBigInt64BE(),
+            type: "long",
+        }, 8]
     }
 }
 
 @tagType(5)
 class FloatParser {
-    parse(data: Buffer): [number, number] {
-        return [data.readFloatBE(), 4]
+    parse(data: Buffer): [float, number] {
+        return [{
+            value: data.readFloatBE(),
+            type: "float",
+        }, 4]
     }
 }
 
 @tagType(6)
 class DoubleParser {
-    parse(data: Buffer): [number, number] {
-        return [data.readDoubleBE(), 8]
+    parse(data: Buffer): [float, number] {
+        return [{
+            value: data.readDoubleBE(),
+            type: "double",
+        }, 8]
     }
 }
 
 @tagType(7)
 class ByteArrayParser {
-    parse(data: Buffer): [number[], number] {
+    parse(data: Buffer): [int[], number] {
         let size = data.readInt32BE()
 
-        let ret = new Array(size)
+        let ret: int[] = new Array(size)
 
         for (let i = 4; i < 4 + size; i++) {
-            ret[i - 4] = data[i]
+            ret[i - 4] = {
+                value: BigInt(data[i]),
+                type: "byte",
+            }
         }
 
         return [ret, size + 4]
@@ -115,8 +146,8 @@ class ListParser {
 
 @tagType(10)
 class CompoundParser {
-    parse(data: Buffer): [{ [index: string]: TagType }, number] {
-        let ret: { [index: string]: TagType } = {}
+    parse(data: Buffer): [Map<string, TagType>, number] {
+        let ret: Map<string, TagType> = new Map()
         for (var i = 0; data[i] != 0;) {
             let id = data[i]
             i++
@@ -131,7 +162,7 @@ class CompoundParser {
 
             i += offset
 
-            ret[name] = value
+            ret.set(name, value)
         }
 
         return [ret, i]
@@ -140,28 +171,34 @@ class CompoundParser {
 
 @tagType(11)
 class IntArrayParser {
-    parse(data: Buffer): [number[], number] {
+    parse(data: Buffer): [int[], number] {
         let size = data.readInt32BE()
 
-        let ret = new Array(size)
+        let ret: int[] = new Array(size)
 
         for (let i = 0; i < size; i++) {
-            ret[i] = data.readInt32BE(4 + i * 4)
+            ret[i] = {
+                value: BigInt(data.readInt32BE(4 + i * 4)),
+                type: "int",
+            }
         }
 
         return [ret, size * 4 + 4]
     }
 }
 
-@tagType(11)
+@tagType(12)
 class LongArrayParser {
-    parse(data: Buffer): [bigint[], number] {
+    parse(data: Buffer): [int[], number] {
         let size = data.readInt32BE()
 
-        let ret = new Array(size)
+        let ret: int[] = new Array(size)
 
         for (let i = 0; i < size; i++) {
-            ret[i] = data.readBigInt64BE(4 + i * 8)
+            ret[i] = {
+                value: data.readBigInt64BE(4 + i * 8),
+                type: "long",
+            }
         }
 
         return [ret, size * 8 + 4]

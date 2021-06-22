@@ -27,7 +27,7 @@ export class MinecraftInterface {
         console.log(parsedData)
 
         try {
-            let channel = parsedData.channel as string
+            let channel = parsedData.get("channel") as string
 
             (this.listeners.get(channel) ?? []).forEach(listener => {
                 listener(parsedData)

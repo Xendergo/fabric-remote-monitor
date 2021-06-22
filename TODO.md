@@ -1,0 +1,9 @@
+- [] Minecraft <-> Server communication
+- [] Server Management Stuff
+  - [] Server Restart
+  - [] Mod Install
+    - [] File Install
+    - [] Curseforge Support
+- [] Proximity Chat
+- [] Package into a single fabric mod
+- [] Installer for Fabric and such (maybe? but prolly not)
