@@ -1,5 +1,5 @@
 import net from "net"
-import { read, TagType } from "./nbt"
+import { decode, TagType } from "./nbt"
 
 export class MinecraftInterface {
     constructor(port: number) {
@@ -22,7 +22,7 @@ export class MinecraftInterface {
     }
 
     onData(data: Buffer) {
-        let parsedData = read(data)
+        let parsedData = decode(data)
 
         console.log(parsedData)
 

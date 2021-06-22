@@ -1,4 +1,6 @@
-export function read(data: Buffer): Map<string, TagType> {
+import { isMap } from "util/types"
+
+export function decode(data: Buffer): Map<string, TagType> {
     let id = data[0]
 
     let len = data.readUInt16BE(1)
@@ -12,7 +14,7 @@ export function read(data: Buffer): Map<string, TagType> {
     return ret.get("") as Map<string, TagType>
 }
 
-export type TagType = int | float | int[] | string | TagType[] | Map<string, TagType>
+export type TagType = int | float | intArray | string | TagType[] | Map<string, TagType>
 
 interface int {
     value: bigint
@@ -24,9 +26,31 @@ interface float {
     type: "float" | "double"
 }
 
-interface TagParser {
-    decode(data: Buffer): [TagType, number]
+interface intArray {
+    value: bigint[]
+    type: "byteArray" | "intArray" | "longArray"
+}
 
+abstract class TagParser {
+    abstract decode(data: Buffer): [TagType, number]
+    abstract encode(value: TagType): number[] | null
+}
+
+abstract class TagParserExtendable<T extends TagType> extends TagParser {
+    abstract decode(data: Buffer): [TagType, number]
+    abstract canEncode(value: TagType): value is T
+    encode(value: TagType): number[] | null {
+        if (!this.canEncode(value)) return null
+
+        let v = this.encodeChecked(value)
+        if (Buffer.isBuffer(v)) {
+            return Array.from(v)
+        } else {
+            return v.map(num => Number(num))
+        }
+    }
+
+    protected abstract encodeChecked(value: T): number[] | bigint[] | Buffer
 }
 
 const tagTypes: Map<number, TagParser> = new Map()
@@ -38,94 +62,174 @@ function tagType(id: number) {
 }
 
 @tagType(1)
-class ByteParser {
+class ByteParser extends TagParserExtendable<int> {
     decode(data: Buffer): [int, number] {
         return [{
             value: BigInt(data[0]),
             type: "byte"
         }, 1]
     }
+
+    canEncode(value: TagType): value is int {
+        return typeof value === "object" && "type" in value && value.type === "byte"
+    }
+
+    encodeChecked(value: int) {
+        return [value.value]
+    }
 }
 
 @tagType(2)
-class ShortParser {
+class ShortParser extends TagParserExtendable<int> {
     decode(data: Buffer): [int, number] {
         return [{
             value: BigInt(data.readInt16BE()),
             type: "short",
         }, 2]
     }
+
+    canEncode(value: TagType): value is int {
+        return typeof value === "object" && "type" in value && value.type === "short"
+    }
+
+    encodeChecked(value: int) {
+        let buf = Buffer.alloc(2)
+
+        buf.writeInt16BE(Number(value.value))
+
+        return buf
+    }
 }
 
 @tagType(3)
-class IntParser {
+class IntParser extends TagParserExtendable<int> {
     decode(data: Buffer): [int, number] {
         return [{
             value: BigInt(data.readInt32BE()),
             type: "int",
         }, 4]
     }
+
+    canEncode(value: TagType): value is int {
+        return typeof value === "object" && "type" in value && value.type === "int"
+    }
+
+    encodeChecked(value: int) {
+        let buf = Buffer.alloc(2)
+
+        buf.writeInt32BE(Number(value.value))
+
+        return buf
+    }
 }
 
 @tagType(4)
-class LongParser {
+class LongParser extends TagParserExtendable<int> {
     decode(data: Buffer): [int, number] {
         return [{
             value: data.readBigInt64BE(),
             type: "long",
         }, 8]
     }
+
+    canEncode(value: TagType): value is int {
+        return typeof value === "object" && "type" in value && value.type === "long"
+    }
+
+    encodeChecked(value: int) {
+        let buf = Buffer.alloc(2)
+
+        buf.writeBigInt64BE(value.value)
+
+        return buf
+    }
 }
 
 @tagType(5)
-class FloatParser {
+class FloatParser extends TagParserExtendable<float> {
     decode(data: Buffer): [float, number] {
         return [{
             value: data.readFloatBE(),
             type: "float",
         }, 4]
     }
+
+    canEncode(value: TagType): value is float {
+        return typeof value === "object" && "type" in value && value.type === "float"
+    }
+
+    encodeChecked(value: float) {
+        let buf = Buffer.alloc(4)
+
+        buf.writeFloatBE(value.value)
+
+        return buf
+    }
 }
 
 @tagType(6)
-class DoubleParser {
+class DoubleParser extends TagParserExtendable<float> {
     decode(data: Buffer): [float, number] {
         return [{
             value: data.readDoubleBE(),
             type: "double",
         }, 8]
     }
+
+    canEncode(value: TagType): value is float {
+        return typeof value === "object" && "type" in value && value.type === "double"
+    }
+
+    encodeChecked(value: float) {
+        let buf = Buffer.alloc(4)
+
+        buf.writeDoubleBE(value.value)
+        
+        return buf
+    }
 }
 
 @tagType(7)
-class ByteArrayParser {
-    decode(data: Buffer): [int[], number] {
+class ByteArrayParser extends TagParserExtendable<intArray> {
+    decode(data: Buffer): [intArray, number] {
         let size = data.readInt32BE()
 
-        let ret: int[] = new Array(size)
+        let ret: bigint[] = new Array(size)
 
         for (let i = 4; i < 4 + size; i++) {
-            ret[i - 4] = {
-                value: BigInt(data[i]),
-                type: "byte",
-            }
+            ret[i - 4] = BigInt(data[i])
         }
 
-        return [ret, size + 4]
+        return [{
+            value: ret,
+            type: "byteArray",
+        }, size + 4]
+    }
+
+    canEncode(value: TagType): value is intArray {
+        return typeof value === "object" && "type" in value && value.type === "byteArray"
+    }
+
+    encodeChecked(value: intArray) {
+        return value.value
     }
 }
 
 @tagType(8)
-class StringParser {
+class StringParser extends TagParserExtendable<string> {
     decode(data: Buffer): [string, number] {
         let len = data.readUInt16BE()
 
         return [data.toString("utf-8", 2, 2 + len), 2 + len]
     }
+
+    canEncode(value: TagType): value is string {
+        return typeof value === "string"
+    }
 }
 
 @tagType(9)
-class ListParser {
+class ListParser extends TagParserExtendable<TagType[]> {
     decode(data: Buffer): [TagType[], number] {
         let id = data[0]
 
@@ -143,10 +247,14 @@ class ListParser {
 
         return [ret, size]
     }
+
+    canEncode(value: TagType): value is TagType[] {
+        return Array.isArray(value)
+    }
 }
 
 @tagType(10)
-class CompoundParser {
+class CompoundParser extends TagParserExtendable<Map<string, TagType>> {
     decode(data: Buffer): [Map<string, TagType>, number] {
         let ret: Map<string, TagType> = new Map()
         for (var i = 0; data[i] != 0;) {
@@ -168,40 +276,52 @@ class CompoundParser {
 
         return [ret, i]
     }
+
+    canEncode(value: TagType): value is Map<string, TagType> {
+        return isMap(value)
+    }
 }
 
 @tagType(11)
-class IntArrayParser {
-    decode(data: Buffer): [int[], number] {
+class IntArrayParser extends TagParserExtendable<intArray> {
+    decode(data: Buffer): [intArray, number] {
         let size = data.readInt32BE()
 
-        let ret: int[] = new Array(size)
+        let ret: bigint[] = new Array(size)
 
         for (let i = 0; i < size; i++) {
-            ret[i] = {
-                value: BigInt(data.readInt32BE(4 + i * 4)),
-                type: "int",
-            }
+            ret[i] = BigInt(data.readInt32BE(4 + i * 4))
         }
 
-        return [ret, size * 4 + 4]
+        return [{
+            value: ret,
+            type: "intArray"
+        }, size * 4 + 4]
+    }
+
+    canEncode(value: TagType): value is intArray {
+        return typeof value === "object" && "type" in value && value.type === "intArray"
     }
 }
 
 @tagType(12)
-class LongArrayParser {
-    decode(data: Buffer): [int[], number] {
+class LongArrayParser extends TagParserExtendable<intArray> {
+    decode(data: Buffer): [intArray, number] {
         let size = data.readInt32BE()
 
-        let ret: int[] = new Array(size)
+        let ret: bigint[] = new Array(size)
 
         for (let i = 0; i < size; i++) {
-            ret[i] = {
-                value: data.readBigInt64BE(4 + i * 8),
-                type: "long",
-            }
+            ret[i] = data.readBigInt64BE(4 + i * 8)
         }
 
-        return [ret, size * 8 + 4]
+        return [{
+            value: ret,
+            type: "longArray",
+        }, size * 8 + 4]
+    }
+
+    canEncode(value: TagType): value is intArray {
+        return typeof value === "object" && "type" in value && value.type === "longArray"
     }
 }
