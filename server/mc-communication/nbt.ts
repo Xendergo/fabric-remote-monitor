@@ -14,6 +14,14 @@ export function decode(data: Buffer): Map<string, TagType> {
     return ret.get("") as Map<string, TagType>
 }
 
+export function encode(data: Map<string, TagType>): Buffer {
+    const [, encoder] = getEncoder(data)
+
+    let encoded = [10, 0, encoder.encode(data)!]
+
+    return Buffer.from(encoded.flat())
+}
+
 export type TagType = int | float | intArray | string | TagType[] | Map<string, TagType>
 
 interface int {
@@ -31,9 +39,20 @@ interface intArray {
     type: "byteArray" | "intArray" | "longArray"
 }
 
+function getEncoder(tag: TagType): [number, TagParser] {
+    for (let [key, value] of tagTypes) {
+        if (value.canEncode(tag)) {
+            return [key, value]
+        }
+    }
+
+    throw new Error("Nothing can encode this tag: " + tag)
+}
+
 abstract class TagParser {
     abstract decode(data: Buffer): [TagType, number]
     abstract encode(value: TagType): number[] | null
+    abstract canEncode(value: TagType): boolean
 }
 
 abstract class TagParserExtendable<T extends TagType> extends TagParser {
@@ -115,7 +134,7 @@ class IntParser extends TagParserExtendable<int> {
     }
 
     encodeChecked(value: int) {
-        let buf = Buffer.alloc(2)
+        let buf = Buffer.alloc(4)
 
         buf.writeInt32BE(Number(value.value))
 
@@ -137,7 +156,7 @@ class LongParser extends TagParserExtendable<int> {
     }
 
     encodeChecked(value: int) {
-        let buf = Buffer.alloc(2)
+        let buf = Buffer.alloc(8)
 
         buf.writeBigInt64BE(value.value)
 
@@ -181,7 +200,7 @@ class DoubleParser extends TagParserExtendable<float> {
     }
 
     encodeChecked(value: float) {
-        let buf = Buffer.alloc(4)
+        let buf = Buffer.alloc(8)
 
         buf.writeDoubleBE(value.value)
         
@@ -211,7 +230,11 @@ class ByteArrayParser extends TagParserExtendable<intArray> {
     }
 
     encodeChecked(value: intArray) {
-        return value.value
+        let buf = Buffer.alloc(4)
+
+        buf.writeInt32BE(value.value.length)
+
+        return [...buf, ...value.value.map(v => Number(v))]
     }
 }
 
@@ -226,6 +249,14 @@ class StringParser extends TagParserExtendable<string> {
     canEncode(value: TagType): value is string {
         return typeof value === "string"
     }
+
+    encodeChecked(value: string) {
+        let buf = Buffer.from("00"+value, "utf-8")
+
+        buf.writeInt16BE(buf.length - 2)
+
+        return buf
+    }
 }
 
 @tagType(9)
@@ -236,6 +267,10 @@ class ListParser extends TagParserExtendable<TagType[]> {
         let len = data.readInt32BE(1)
 
         let size = 5
+
+        if (id == 0) {
+            return [[], 5]
+        }
 
         let ret: TagType[] = []
 
@@ -251,12 +286,35 @@ class ListParser extends TagParserExtendable<TagType[]> {
     canEncode(value: TagType): value is TagType[] {
         return Array.isArray(value)
     }
+
+    encodeChecked(values: TagType[]) {
+        if (values.length == 0) {
+            return [0, 0, 0, 0, 0]
+        }
+        
+        let lengthBuf = Buffer.alloc(4)
+        lengthBuf.writeInt32BE(values.length)
+        let ret = [Array.from(lengthBuf)]
+        
+        let [, encoder] = getEncoder(values[0])
+
+        for (const value of values) {
+            const encoded = encoder.encode(value)
+
+            if (encoded == null) throw new Error("The elements of a list aren't the same type: " + values)
+
+            ret.push(encoded)
+        }
+
+        return ret.flat(Infinity) as number[]
+    }
 }
 
 @tagType(10)
 class CompoundParser extends TagParserExtendable<Map<string, TagType>> {
     decode(data: Buffer): [Map<string, TagType>, number] {
         let ret: Map<string, TagType> = new Map()
+
         for (var i = 0; data[i] != 0;) {
             let id = data[i]
             i++
@@ -280,6 +338,26 @@ class CompoundParser extends TagParserExtendable<Map<string, TagType>> {
     canEncode(value: TagType): value is Map<string, TagType> {
         return isMap(value)
     }
+
+    encodeChecked(values: Map<string, TagType>) {
+        type retType = (number | retType)[]
+
+        let ret: retType = []
+
+        for (const [key, value] of values) {
+            const [id, encoder] = getEncoder(value)
+
+            ret.push(id)
+
+            ret.push(new StringParser().encode(key)!)
+
+            ret.push(encoder.encode(value)!)
+        }
+
+        ret.push(0)
+
+        return ret.flat(Infinity) as number[]
+    }
 }
 
 @tagType(11)
@@ -302,6 +380,20 @@ class IntArrayParser extends TagParserExtendable<intArray> {
     canEncode(value: TagType): value is intArray {
         return typeof value === "object" && "type" in value && value.type === "intArray"
     }
+
+    encodeChecked(value: intArray) {
+        let ints = value.value
+
+        let buf = Buffer.alloc(4 + ints.length * 4)
+
+        buf.writeInt32BE(ints.length)
+
+        for (let i = 0; i < ints.length; i++) {
+            buf.writeInt32BE(Number(ints[i]), i * 4 + 4)
+        }
+
+        return buf
+    }
 }
 
 @tagType(12)
@@ -323,5 +415,19 @@ class LongArrayParser extends TagParserExtendable<intArray> {
 
     canEncode(value: TagType): value is intArray {
         return typeof value === "object" && "type" in value && value.type === "longArray"
+    }
+
+    encodeChecked(value: intArray) {
+        let ints = value.value
+
+        let buf = Buffer.alloc(4 + ints.length * 8)
+
+        buf.writeInt32BE(ints.length)
+
+        for (let i = 0; i < ints.length; i++) {
+            buf.writeBigInt64BE(ints[i], i * 8 + 4)
+        }
+
+        return buf
     }
 }

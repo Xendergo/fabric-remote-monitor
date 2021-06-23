@@ -1,6 +1,9 @@
 - [] Minecraft <-> Server communication
+  - [] Sick NBT converter
 - [] Server Management Stuff
-  - [] Server Restart
+  - [] Spawning and managing fabric server instance
+    - [] Server Restart
+    - [] Automatically respawn server instance
   - [] Mod Install
     - [] File Install
     - [] Curseforge Support
