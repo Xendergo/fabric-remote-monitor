@@ -19,40 +19,40 @@ export class MinecraftInterface {
 
             var testData: TagType = new Map()
 
-            // testData.set("bite", {
-            //     value: 8n,
-            //     type: "byte"
-            // })
+            testData.set("bite", {
+                value: 8n,
+                type: "byte"
+            })
 
-            // testData.set("strieng", "yeet")
+            testData.set("strieng", "yeet")
 
-            // testData.set("thingy", {
-            //     type: "intArray",
-            //     value: [0n, 1n, 2n, 1n, 0n]
-            // })
+            testData.set("thingy", {
+                type: "intArray",
+                value: [0n, 1n, 2n, 1n, 0n]
+            })
 
-            // testData.set("listy", [
-            //     {
-            //         type: "double",
-            //         value: 0.7
-            //     },
-            //     {
-            //         type: "double",
-            //         value: 0.8
-            //     },
-            //     {
-            //         type: "double",
-            //         value: 0.9
-            //     },
-            //     {
-            //         type: "double",
-            //         value: 0.8
-            //     },
-            //     {
-            //         type: "double",
-            //         value: 0.7
-            //     },
-            // ])
+            testData.set("listy", [
+                {
+                    type: "double",
+                    value: 0.7
+                },
+                {
+                    type: "double",
+                    value: 0.8
+                },
+                {
+                    type: "double",
+                    value: 0.9
+                },
+                {
+                    type: "double",
+                    value: 0.8
+                },
+                {
+                    type: "double",
+                    value: 0.7
+                },
+            ])
 
             this.send("test", testData)
         })
@@ -97,7 +97,7 @@ export class MinecraftInterface {
     onPacket(data: Buffer) {
         let parsedData = decode(data)
 
-        console.log(data)
+        console.log(data, data.length)
         console.log(parsedData)
 
         try {

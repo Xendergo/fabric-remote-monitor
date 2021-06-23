@@ -8,7 +8,6 @@ import java.nio.ByteOrder;
 import org.apache.logging.log4j.Level;
 
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.nbt.NbtCompound;
 
 public class SocketReaderThread extends Thread {
     SocketReaderThread(Socket socket) {
@@ -80,7 +79,8 @@ public class SocketReaderThread extends Thread {
 
         buffer.capacity(packet.length);
         buffer.setBytes(0, packet);
-        var compound = buffer.decode(NbtCompound.CODEC);
+        buffer.setIndex(0, packet.length);
+        var compound = buffer.readNbt();
 
         FabricRemoteMonitor.log(Level.INFO, compound.asString());
     }

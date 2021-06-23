@@ -51,7 +51,7 @@ public class ServerInterface {
         data.putString("channel", channel);
 
         PacketByteBuf buf = PacketByteBufs.create();
-        buf.encode(NbtCompound.CODEC, data);
+        buf.writeNbt(data);
 
         var lenBuffer = ByteBuffer.allocate(4);
         lenBuffer.order(ByteOrder.BIG_ENDIAN);
