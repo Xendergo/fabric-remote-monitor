@@ -10,3 +10,4 @@
 - [] Proximity Chat
 - [] Package into a single fabric mod
 - [] Installer for Fabric and such (maybe? but prolly not)
+

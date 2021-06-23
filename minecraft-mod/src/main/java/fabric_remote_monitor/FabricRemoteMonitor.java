@@ -34,10 +34,6 @@ public class FabricRemoteMonitor implements ModInitializer {
 
             NbtCompound testData = new NbtCompound();
 
-            testData.putString("thingy1", "consumes cheese");
-            testData.putFloat("thingy2", 0.7F);
-            testData.putByteArray("thimngy3", new byte[] {1, 2, 3, 2, 1});
-
             serverInterface.SendMessage("test", testData);
         });
 

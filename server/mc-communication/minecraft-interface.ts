@@ -5,10 +5,7 @@ export class MinecraftInterface {
     constructor(port: number) {
         this.server = net.createServer()
         this.server.listen(port)
-        // console.log(this); // just checking if I'm not insane
-        // this is fine here
-        // oh idea
-        // bind the function maybe?
+
         this.server.on("connection", socket => {
             if (this.socket !== undefined) {
                 // TODO: Send and error message
@@ -22,40 +19,40 @@ export class MinecraftInterface {
 
             var testData: TagType = new Map()
 
-            testData.set("bite", {
-                value: 8n,
-                type: "byte"
-            })
+            // testData.set("bite", {
+            //     value: 8n,
+            //     type: "byte"
+            // })
 
-            testData.set("strieng", "yeet")
+            // testData.set("strieng", "yeet")
 
-            testData.set("thingy", {
-                type: "intArray",
-                value: [0n, 1n, 2n, 1n, 0n]
-            })
+            // testData.set("thingy", {
+            //     type: "intArray",
+            //     value: [0n, 1n, 2n, 1n, 0n]
+            // })
 
-            testData.set("listy", [
-                {
-                    type: "double",
-                    value: 0.7
-                },
-                {
-                    type: "double",
-                    value: 0.8
-                },
-                {
-                    type: "double",
-                    value: 0.9
-                },
-                {
-                    type: "double",
-                    value: 0.8
-                },
-                {
-                    type: "double",
-                    value: 0.7
-                },
-            ])
+            // testData.set("listy", [
+            //     {
+            //         type: "double",
+            //         value: 0.7
+            //     },
+            //     {
+            //         type: "double",
+            //         value: 0.8
+            //     },
+            //     {
+            //         type: "double",
+            //         value: 0.9
+            //     },
+            //     {
+            //         type: "double",
+            //         value: 0.8
+            //     },
+            //     {
+            //         type: "double",
+            //         value: 0.7
+            //     },
+            // ])
 
             this.send("test", testData)
         })
@@ -100,6 +97,7 @@ export class MinecraftInterface {
     onPacket(data: Buffer) {
         let parsedData = decode(data)
 
+        console.log(data)
         console.log(parsedData)
 
         try {
@@ -116,10 +114,10 @@ export class MinecraftInterface {
 
         let encoded = encode(data)
 
+        console.log(encoded)
+
         let lenBuf = Buffer.alloc(4)
         lenBuf.writeUInt32BE(encoded.length)
-
-        console.log(lenBuf, encoded)
 
         this.socket?.write(lenBuf)
         this.socket?.write(encoded)

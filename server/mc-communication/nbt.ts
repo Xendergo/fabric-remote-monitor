@@ -17,7 +17,7 @@ export function decode(data: Buffer): Map<string, TagType> {
 export function encode(data: Map<string, TagType>): Buffer {
     const [, encoder] = getEncoder(data)
 
-    let encoded = [10, 0, encoder.encode(data)!]
+    let encoded = [10, 0, 0, encoder.encode(data)!]
 
     return Buffer.from(encoded.flat())
 }
@@ -252,7 +252,7 @@ class StringParser extends TagParserExtendable<string> {
 
     encodeChecked(value: string) {
         let buf = Buffer.from("00"+value, "utf-8")
-
+        
         buf.writeInt16BE(buf.length - 2)
 
         return buf
@@ -295,8 +295,10 @@ class ListParser extends TagParserExtendable<TagType[]> {
         let lengthBuf = Buffer.alloc(4)
         lengthBuf.writeInt32BE(values.length)
         let ret = [Array.from(lengthBuf)]
-        
-        let [, encoder] = getEncoder(values[0])
+
+        let [id, encoder] = getEncoder(values[0])
+
+        ret.unshift([id])
 
         for (const value of values) {
             const encoded = encoder.encode(value)
