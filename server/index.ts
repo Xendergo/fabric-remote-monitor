@@ -1,5 +1,6 @@
 import express from "express"
-import { MinecraftInterface } from './mc-communication/minecraft-interface';
+import { MinecraftInterface } from "./mc-communication/minecraft-interface"
+import { ClientConnection } from "./client-communication/ClientConnection"
 
 const app = express()
 
