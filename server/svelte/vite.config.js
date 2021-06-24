@@ -9,7 +9,7 @@ import {
 export default defineConfig({
   build: {
     outDir: '../build',
-    emptyOutDir: false
+    emptyOutDir: false,
   },
   plugins: [svelte()]
 })
