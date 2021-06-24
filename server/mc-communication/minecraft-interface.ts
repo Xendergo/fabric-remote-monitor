@@ -123,7 +123,13 @@ export class MinecraftInterface {
         this.socket?.write(encoded)
     }
 
+    listen(channel: string, callback: (data: TagType) => void) {
+        if (!this.listeners.has(channel)) this.listeners.set(channel, [])
+
+        this.listeners.get(channel)!.push(callback)
+    }
+
     private server
     private socket?: net.Socket
-    private listeners: Map<string, [(data: TagType) => void]> = new Map()
+    private listeners: Map<string, ((data: TagType) => void)[]> = new Map()
 }
