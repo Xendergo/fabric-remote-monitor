@@ -11,5 +11,11 @@ export default defineConfig({
     outDir: '../build',
     emptyOutDir: false,
   },
+  server: {
+    https: true,
+    proxy: {
+      "/ws": "localhost:8000/ws"
+    }
+  },
   plugins: [svelte()]
 })
