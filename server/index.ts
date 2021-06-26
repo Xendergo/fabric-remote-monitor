@@ -4,7 +4,6 @@ import ws from "ws"
 import { location } from "./database/Database"
 import fs from "fs"
 import path from "path"
-import https from "https"
 import { pki } from "node-forge"
 
 if (!fs.existsSync(location)) {
@@ -88,24 +87,31 @@ if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
 
 const app = express()
 
-const httpsServer = https.createServer({
-    key: fs.readFileSync(keyPath),
-    cert: fs.readFileSync(certPath),
-    
-}, app)
+app.use(function(req, res, next) {
+    console.log(req.url)
+    next()
+})
+
+// const httpsServer = https.createServer({
+//     key: fs.readFileSync(keyPath),
+//     cert: fs.readFileSync(certPath),
+// }, app)
 
 const port = 8000
 
 app.use(express.static("./build"))
 
 // fuser -k 8000/tcp
-httpsServer.listen(port)
+const server = app.listen(port)
 console.log(`Web server running on port ${port}`)
 
 const minecraftInterface = new MinecraftInterface(8080)
 
 const wss = new ws.Server({
-    server: httpsServer,
-    path: "ws"
+    server: server,
+    path: "/ws"
 })
 
+wss.on("connection", (ws) => {
+  console.log("WS CONNECTION")
+})

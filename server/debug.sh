@@ -1,7 +1,7 @@
 tsnd --respawn --transpile-only index.ts -- debug &
 pid=$!
 cd svelte
-npx vite
+npx vite &
 pid2=$!
 echo Press enter to kill
 read

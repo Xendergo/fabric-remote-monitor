@@ -2,7 +2,8 @@ import type { Sendable } from "../../networking/sendableTypes"
 
 const listeners: Map<string, Set<(data: Sendable) => void>> = new Map()
 
-const ws = new WebSocket(`wss://${location.host}/ws`)
+// const ws = new WebSocket(`ws://${location.host}/ws`)
+const ws = new WebSocket(`ws://localhost:8000/ws`)
 
 ws.onmessage = (e) => {
     const dataString: string = e.data

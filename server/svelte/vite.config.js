@@ -12,10 +12,9 @@ export default defineConfig({
     emptyOutDir: false,
   },
   server: {
-    https: true,
     proxy: {
       "/ws": {
-        target: "https://localhost:8000/ws",
+        target: "http://localhost:8000",
         changeOrigin: true,
         secure: false,
         ws: true,
