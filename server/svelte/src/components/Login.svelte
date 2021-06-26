@@ -32,7 +32,7 @@
 <div>
     <input placeholder="username" bind:value={username} />
     <input type="password" placeholder="password" bind:value={password} />
-    <button on:click={sendLoginDetails}>Submit</button>
+    <button on:click={sendLoginDetails}>Log in</button>
 
     {#if showErrorMessage}
         <p>Your username or password was incorrect</p>

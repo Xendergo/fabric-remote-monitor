@@ -1,7 +1,7 @@
 import ws from 'ws';
-import { checkPassword, User } from '../database/User';
+import { canCreateUser, checkPassword, User } from '../database/User';
 import { WsConnectionManager } from './WsConnectionManager';
-import { LoginDetails, LoginFailed, LoginSuccessful } from './sendableTypes';
+import { LoginDetails, LoginFailed, LoginSuccessful, SignupDetails } from './sendableTypes';
 
 export class ConnectedUser {
     constructor(socket: ws) {
@@ -19,6 +19,10 @@ export class ConnectedUser {
 
             this.connectionManager.send(new LoginSuccessful())
             this.user = maybeUser
+        })
+
+        this.connectionManager.listen("SignupDetails", async (data: SignupDetails) => {
+            console.log(await canCreateUser(data.username))
         })
     }
 

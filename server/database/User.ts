@@ -1,3 +1,4 @@
+import e from "express"
 import { db } from "./Database"
 
 export class User {
@@ -88,6 +89,34 @@ export function createUser(username: string, password: string): Promise<User> {
             }
 
             resolve(new User(username, false))
+        })
+    })
+}
+
+export function canCreateUser(username: string): Promise<true | string> {
+    return new Promise((resolve, reject) => {
+        db.get(`SELECT * FROM users WHERE username = $username`, {
+            $username: username
+        }, (data) => {
+            if (data != null) {
+                resolve("That user already exists")
+            }
+
+            db.get(`SELECT * FROM settings ASC LIMIT 1`, (err, data) => {
+                if (data.allowedUsers == null) {
+                    resolve(true)
+                    return
+                }
+
+                let allowedUsers: string[] = JSON.parse(data.allowedUsers)
+
+                if (allowedUsers.includes(username)) {
+                    resolve(true)
+                    return
+                }
+
+                resolve("That username doesn't have permission to create an account")
+            })
         })
     })
 }
