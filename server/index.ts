@@ -5,6 +5,7 @@ import { location } from "./database/Database"
 import fs from "fs"
 import path from "path"
 import { pki } from "node-forge"
+import { ConnectedUser } from "./networking/ConnectedUser"
 
 if (!fs.existsSync(location)) {
     fs.mkdirSync(location, {
@@ -112,6 +113,6 @@ const wss = new ws.Server({
     path: "/ws"
 })
 
-wss.on("connection", (ws) => {
-  console.log("WS CONNECTION")
+wss.on("connection", (connection) => {
+  new ConnectedUser(connection)
 })

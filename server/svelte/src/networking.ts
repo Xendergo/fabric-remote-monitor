@@ -6,12 +6,9 @@ const listeners: Map<string, Set<(data: Sendable) => void>> = new Map()
 const ws = new WebSocket(`ws://localhost:8000/ws`)
 
 ws.onmessage = (e) => {
-    const dataString: string = e.data
-    const data = JSON.parse(dataString)
+    const data: Sendable = JSON.parse(e.data as string)
 
-    const channel: string = data.channel
-
-    listeners.get(channel).forEach((listener) => {
+    listeners.get(data.channel)?.forEach((listener) => {
         listener(data)
     })
 }

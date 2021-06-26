@@ -21,18 +21,30 @@ CREATE TABLE IF NOT EXISTS users (
     password TEXT NOT NULL,
     admin INTEGER DEFAULT 0
 );
+`)
 
+db.run(`
 CREATE TABLE IF NOT EXISTS settings (
     allowedUsers TEXT,
     proximityChat INTEGER DEFAULT 0,
     discordToken TEXT
 );
+`, () => {
+    db.get(`SELECT COUNT(*) FROM settings`, (err, v) => {
+        if (v["COUNT(*)"] == 0) {
+            db.run(`INSERT INTO settings (proximityChat) VALUES (0)`)
+        }
+    })
+})
 
+db.run(`
 CREATE TABLE IF NOT EXISTS guildSettings (
     id TEXT PRIMARY KEY,
     mirror TEXT
 );
+`)
 
+db.run(`
 CREATE TABLE IF NOT EXISTS mods (
     source TEXT NOT NULL,
     file TEXT NOT NULL

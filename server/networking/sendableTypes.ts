@@ -15,7 +15,15 @@ export class LoginDetails implements Sendable {
         this.password = password
     }
 
-    channel = "loginDetails"
+    channel = "LoginDetails"
     username: string
     password: string
+}
+
+export class LoginFailed implements Sendable {
+    channel = "LoginFailed"
+}
+
+export class LoginSuccessful implements Sendable {
+    channel = "LoginSuccessful"
 }

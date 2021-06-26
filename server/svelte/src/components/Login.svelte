@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { send } from "../networking"
+    import { listen, send, stopListening } from "../networking"
     import { LoginDetails } from "../../../networking/sendableTypes"
+    import { onDestroy } from "svelte"
 
     let username: string
     let password: string
@@ -8,8 +9,50 @@
     function sendLoginDetails() {
         send<LoginDetails>(new LoginDetails(username, password))
     }
+
+    let showErrorMessage = false
+
+    function loginFailed() {
+        showErrorMessage = true
+    }
+
+    function loginSuccessful() {
+        console.log("Login was successful!")
+    }
+
+    listen("LoginFailed", loginFailed)
+    listen("LoginSuccessful", loginSuccessful)
+
+    onDestroy(() => {
+        stopListening("LoginFailed", loginFailed)
+        stopListening("LoginSuccessful", loginSuccessful)
+    })
 </script>
 
-<input placeholder="username" bind:value={username} />
-<input type="password" placeholder="password" bind:value={password} />
-<button on:click={sendLoginDetails}>Submit</button>
+<div>
+    <input placeholder="username" bind:value={username} />
+    <input type="password" placeholder="password" bind:value={password} />
+    <button on:click={sendLoginDetails}>Submit</button>
+
+    {#if showErrorMessage}
+        <p>Your username or password was incorrect</p>
+    {/if}
+</div>
+
+<style>
+    div {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+    }
+
+    p {
+        color: red;
+    }
+</style>
