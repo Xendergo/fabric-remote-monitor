@@ -1,9 +1,9 @@
 <script lang="ts">
-    import Mirror from "./components/Mirror.svelte"
+    import Login from "./components/Login.svelte"
 </script>
 
 <main>
-    <Mirror />
+    <Login />
 </main>
 
 <style>

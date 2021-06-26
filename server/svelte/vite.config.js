@@ -14,7 +14,12 @@ export default defineConfig({
   server: {
     https: true,
     proxy: {
-      "/ws": "localhost:8000/ws"
+      "/ws": {
+        target: "https://localhost:8000/ws",
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      }
     }
   },
   plugins: [svelte()]
