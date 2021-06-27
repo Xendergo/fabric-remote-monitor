@@ -1,49 +1,124 @@
-import { TagType } from "../mc-communication/nbt";
+import { TagType } from "../mc-communication/nbt"
 
-export interface Sendable {
-    channel: string
+export abstract class Sendable {
+    channel: string | undefined
 }
 
-export interface NbtSendable extends Sendable {
-    encode(): TagType
-    decode(data: Map<string, TagType>): void
+export abstract class NbtSendable extends Sendable {
+    abstract encode(): Map<string, TagType>
 }
 
-export class LoginDetails implements Sendable {
+export const nbtSendable: Map<
+    string,
+    (data: Map<string, TagType>) => NbtSendable
+> = new Map()
+
+function MakeSendable<T extends Sendable>(channel: string) {
+    return (constructor: Function) => {
+        constructor.prototype.channel = channel
+    }
+}
+
+function MakeNbtSendable<T extends NbtSendable>(
+    channel: string,
+    decode: (data: Map<string, TagType>) => T
+) {
+    return (constructor: Function) => {
+        nbtSendable.set(channel, decode)
+        constructor.prototype.channel = channel
+    }
+}
+
+@MakeSendable("LoginDetails")
+export class LoginDetails extends Sendable {
     constructor(username: string, password: string) {
+        super()
         this.username = username
         this.password = password
     }
 
-    channel = "LoginDetails"
+    static channel() {
+        return this.prototype.channel as string
+    }
+
     username: string
     password: string
 }
 
-export class SignupDetails implements NbtSendable {
+@MakeNbtSendable("SignupDetails", data => {
+    return new SignupDetails(
+        data.get("username")! as string,
+        data.get("password")! as string
+    )
+})
+export class SignupDetails extends NbtSendable {
     constructor(username: string, password: string) {
+        super()
         this.username = username
         this.password = password
     }
 
-    channel = "SignupDetails"
+    static channel() {
+        return this.prototype.channel as string
+    }
+
     username: string
     password: string
 
     encode() {
         return new Map(Object.entries(this))
     }
+}
 
-    decode(data: Map<string, TagType>) {
-        this.username = data.get("username") as string
-        this.password = data.get("password") as string
+@MakeSendable("LoginFailed")
+export class LoginFailed extends Sendable {
+    static channel() {
+        return this.prototype.channel as string
     }
 }
 
-export class LoginFailed implements Sendable {
-    channel = "LoginFailed"
+@MakeSendable("LoginSuccessful")
+export class LoginSuccessful extends Sendable {
+    static channel() {
+        return this.prototype.channel as string
+    }
 }
 
-export class LoginSuccessful implements Sendable {
-    channel = "LoginSuccessful"
+@MakeNbtSendable("MirrorMessage", data => {
+    return new MirrorMessage(
+        data.get("author")! as string,
+        data.get("message")! as string
+    )
+})
+export class MirrorMessage extends NbtSendable {
+    constructor(author: string, message: string) {
+        super()
+        this.author = author
+        this.message = message
+    }
+
+    static channel() {
+        return this.prototype.channel as string
+    }
+
+    author
+    message
+
+    encode() {
+        return new Map(Object.entries(this))
+    }
+}
+
+@MakeSendable("ClientMirrorMessage")
+export class ClientMirrorMessage extends Sendable {
+    constructor(message: string) {
+        super()
+        this.message = message
+    }
+
+    static channel() {
+        return this.prototype.channel as string
+    }
+
+    message
 }

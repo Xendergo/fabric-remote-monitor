@@ -1,6 +1,10 @@
 <script lang="ts">
     import { listen, send, stopListening } from "../networking"
-    import { LoginDetails } from "../../../networking/sendableTypes"
+    import {
+        LoginDetails,
+        LoginFailed,
+        LoginSuccessful,
+    } from "../../../networking/sendableTypes"
     import { onDestroy } from "svelte"
     import { changePage } from "./pageManager"
 
@@ -8,7 +12,7 @@
     let password: string
 
     function sendLoginDetails() {
-        send<LoginDetails>(new LoginDetails(username, password))
+        send(new LoginDetails(username, password))
     }
 
     let showErrorMessage = false
@@ -21,12 +25,12 @@
         changePage("home")
     }
 
-    listen("LoginFailed", loginFailed)
-    listen("LoginSuccessful", loginSuccessful)
+    listen(LoginFailed, loginFailed)
+    listen(LoginSuccessful, loginSuccessful)
 
     onDestroy(() => {
-        stopListening("LoginFailed", loginFailed)
-        stopListening("LoginSuccessful", loginSuccessful)
+        stopListening(LoginFailed, loginFailed)
+        stopListening(LoginSuccessful, loginSuccessful)
     })
 </script>
 

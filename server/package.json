@@ -2,7 +2,6 @@
     "name": "fabric-remote-monitor",
     "version": "1.0.0",
     "description": "Monitor and configure your minecraft server from a nice webpage, also includes some other cool features like including a discord bot",
-    "main": "index.js",
     "scripts": {
         "dev": "bash debug.sh"
     },

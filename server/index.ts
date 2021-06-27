@@ -9,7 +9,7 @@ import { ConnectedUser } from "./networking/ConnectedUser"
 
 if (!fs.existsSync(location)) {
     fs.mkdirSync(location, {
-        recursive: true
+        recursive: true,
     })
 }
 
@@ -24,59 +24,74 @@ if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
     cert.serialNumber = "01"
     cert.validity.notBefore = new Date()
     cert.validity.notAfter = new Date()
-    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear()+1)
+    cert.validity.notAfter.setFullYear(
+        cert.validity.notBefore.getFullYear() + 1
+    )
 
-    const attrs = [{
-        name: 'commonName',
-        value: 'fabric-remote-monitor'
-      }, {
-        name: 'countryName',
-        value: 'US'
-      }, {
-        shortName: 'ST',
-        value: ''
-      }, {
-        name: 'localityName',
-        value: ''
-      }, {
-        name: 'organizationName',
-        value: 'fabric-remote-monitor'
-      }, {
-        shortName: 'OU',
-        value: 'fabric-remote-monitor'
-      }]
+    const attrs = [
+        {
+            name: "commonName",
+            value: "fabric-remote-monitor",
+        },
+        {
+            name: "countryName",
+            value: "US",
+        },
+        {
+            shortName: "ST",
+            value: "",
+        },
+        {
+            name: "localityName",
+            value: "",
+        },
+        {
+            name: "organizationName",
+            value: "fabric-remote-monitor",
+        },
+        {
+            shortName: "OU",
+            value: "fabric-remote-monitor",
+        },
+    ]
 
     cert.setSubject(attrs)
     cert.setIssuer(attrs)
-    cert.setExtensions([{
-        name: 'basicConstraints',
-        cA: true
-      }, {
-        name: 'keyUsage',
-        keyCertSign: true,
-        digitalSignature: true,
-        nonRepudiation: true,
-        keyEncipherment: true,
-        dataEncipherment: true
-      }, {
-        name: 'extKeyUsage',
-        serverAuth: true,
-        clientAuth: true,
-        codeSigning: true,
-        emailProtection: true,
-        timeStamping: true
-      }, {
-        name: 'nsCertType',
-        client: true,
-        server: true,
-        email: true,
-        objsign: true,
-        sslCA: true,
-        emailCA: true,
-        objCA: true
-      }, {
-        name: 'subjectKeyIdentifier'
-      }]);
+    cert.setExtensions([
+        {
+            name: "basicConstraints",
+            cA: true,
+        },
+        {
+            name: "keyUsage",
+            keyCertSign: true,
+            digitalSignature: true,
+            nonRepudiation: true,
+            keyEncipherment: true,
+            dataEncipherment: true,
+        },
+        {
+            name: "extKeyUsage",
+            serverAuth: true,
+            clientAuth: true,
+            codeSigning: true,
+            emailProtection: true,
+            timeStamping: true,
+        },
+        {
+            name: "nsCertType",
+            client: true,
+            server: true,
+            email: true,
+            objsign: true,
+            sslCA: true,
+            emailCA: true,
+            objCA: true,
+        },
+        {
+            name: "subjectKeyIdentifier",
+        },
+    ])
 
     cert.sign(keys.privateKey)
 
@@ -88,7 +103,7 @@ if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
 
 const app = express()
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     console.log(req.url)
     next()
 })
@@ -110,9 +125,11 @@ const minecraftInterface = new MinecraftInterface(8080)
 
 const wss = new ws.Server({
     server: server,
-    path: "/ws"
+    path: "/ws",
 })
 
-wss.on("connection", (connection) => {
-  new ConnectedUser(connection)
+export const connectedUsers: Set<ConnectedUser> = new Set()
+
+wss.on("connection", connection => {
+    connectedUsers.add(new ConnectedUser(connection))
 })

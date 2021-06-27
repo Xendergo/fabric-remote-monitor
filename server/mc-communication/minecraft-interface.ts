@@ -1,5 +1,6 @@
 import net from "net"
-import { decode, TagType, encode } from './nbt';
+import { decode, TagType, encode } from "./nbt"
+import { NbtSendable, nbtSendable } from "../networking/sendableTypes"
 
 export class MinecraftInterface {
     constructor(port: number) {
@@ -16,45 +17,6 @@ export class MinecraftInterface {
             this.socket = socket
 
             this.socket.on("data", data => this.onData(data))
-
-            var testData: TagType = new Map()
-
-            testData.set("bite", {
-                value: 8n,
-                type: "byte"
-            })
-
-            testData.set("strieng", "yeet")
-
-            testData.set("thingy", {
-                type: "intArray",
-                value: [0n, 1n, 2n, 1n, 0n]
-            })
-
-            testData.set("listy", [
-                {
-                    type: "double",
-                    value: 0.7
-                },
-                {
-                    type: "double",
-                    value: 0.8
-                },
-                {
-                    type: "double",
-                    value: 0.9
-                },
-                {
-                    type: "double",
-                    value: 0.8
-                },
-                {
-                    type: "double",
-                    value: 0.7
-                },
-            ])
-
-            this.send("test", testData)
         })
 
         console.log(`Tcp server running on port ${port}`)
@@ -65,7 +27,7 @@ export class MinecraftInterface {
 
     private currentLengthIndex = 0
     private lengthBuffer = Buffer.alloc(4)
-    
+
     onData(data: Buffer) {
         for (const byte of data) {
             this.onByte(byte)
@@ -77,44 +39,45 @@ export class MinecraftInterface {
             if (this.currentLengthIndex != 4) {
                 this.lengthBuffer[this.currentLengthIndex] = byte
                 this.currentLengthIndex++
-            } 
-            
+            }
+
             if (this.currentLengthIndex == 4) {
                 this.currentLengthIndex = 0
                 this.currentBytesLeft = this.lengthBuffer.readInt32BE()
                 this.currentPacket = Buffer.alloc(this.currentBytesLeft)
             }
         } else {
-            this.currentPacket[this.currentPacket.length - this.currentBytesLeft] = byte
+            this.currentPacket[
+                this.currentPacket.length - this.currentBytesLeft
+            ] = byte
             this.currentBytesLeft--
-    
+
             if (this.currentBytesLeft == 0) {
                 this.onPacket(this.currentPacket)
             }
         }
     }
-    
-    onPacket(data: Buffer) {
-        let parsedData = decode(data)
 
-        console.log(data, data.length)
-        console.log(parsedData)
+    onPacket(data: Buffer) {
+        const parsedData = decode(data)
+
+        const decoded = nbtSendable.get(parsedData.get("channel")! as string)!(
+            parsedData
+        )
 
         try {
             let channel = parsedData.get("channel") as string
 
-            (this.listeners.get(channel) ?? []).forEach(listener => {
-                listener(parsedData)
-            });
+            ;(this.listeners.get(channel) ?? []).forEach(listener => {
+                listener(decoded)
+            })
         } catch {}
     }
 
-    send(channel: string, data: Map<string, TagType>) {
-        data.set("channel", channel)
+    send<T extends NbtSendable>(data: T) {
+        const converted = data.encode()
 
-        let encoded = encode(data)
-
-        console.log(encoded)
+        let encoded = encode(converted)
 
         let lenBuf = Buffer.alloc(4)
         lenBuf.writeUInt32BE(encoded.length)
@@ -123,13 +86,16 @@ export class MinecraftInterface {
         this.socket?.write(encoded)
     }
 
-    listen(channel: string, callback: (data: TagType) => void) {
+    listen<T extends NbtSendable>(
+        channel: string,
+        callback: (data: T) => void
+    ) {
         if (!this.listeners.has(channel)) this.listeners.set(channel, [])
 
-        this.listeners.get(channel)!.push(callback)
+        this.listeners.get(channel)!.push(callback as any)
     }
 
     private server
     private socket?: net.Socket
-    private listeners: Map<string, ((data: TagType) => void)[]> = new Map()
+    private listeners: Map<string, ((data: NbtSendable) => void)[]> = new Map()
 }

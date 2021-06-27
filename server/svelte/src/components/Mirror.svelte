@@ -1,4 +1,10 @@
 <script lang="ts">
+    import { listen, send } from "../networking"
+    import {
+        ClientMirrorMessage,
+        MirrorMessage,
+    } from "../../../networking/sendableTypes"
+
     interface message {
         author: string
         message: string
@@ -14,6 +20,21 @@
             message: "Poggers.",
         },
     ]
+
+    let message: string
+
+    function sendMessage(e) {
+        if (e.key !== "Enter") return
+
+        send<ClientMirrorMessage>(new ClientMirrorMessage(message))
+        message = ""
+    }
+
+    function onMirrorMessage(msg: MirrorMessage) {
+        messages = [...messages, msg]
+    }
+
+    listen(MirrorMessage, onMirrorMessage)
 </script>
 
 <div class="mirrorContainer">
@@ -22,7 +43,11 @@
             <p>{"<"}{message.author}> {message.message}</p>
         {/each}
     </div>
-    <input placeholder="Send a message" />
+    <input
+        placeholder="Send a message"
+        on:keypress={sendMessage}
+        bind:value={message}
+    />
 </div>
 
 <style>
