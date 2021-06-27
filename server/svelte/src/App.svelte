@@ -1,9 +1,15 @@
 <script lang="ts">
-    import Login from "./components/Login.svelte"
+    import Login from "./pages/Login.svelte"
+    import Home from "./pages/Home.svelte"
+    import { page } from "./pages/pageManager"
 </script>
 
 <main>
-    <Login />
+    {#if $page == "login"}
+        <Login />
+    {:else if $page == "home"}
+        <Home />
+    {/if}
 </main>
 
 <style>
@@ -32,6 +38,7 @@
         margin: 8px;
         border-radius: 8px;
         transition-duration: 0.2s;
+        outline: none;
     }
 
     :global(button:hover) {

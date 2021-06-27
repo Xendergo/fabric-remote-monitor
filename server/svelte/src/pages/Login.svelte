@@ -2,6 +2,7 @@
     import { listen, send, stopListening } from "../networking"
     import { LoginDetails } from "../../../networking/sendableTypes"
     import { onDestroy } from "svelte"
+    import { changePage } from "./pageManager"
 
     let username: string
     let password: string
@@ -17,7 +18,7 @@
     }
 
     function loginSuccessful() {
-        console.log("Login was successful!")
+        changePage("home")
     }
 
     listen("LoginFailed", loginFailed)
