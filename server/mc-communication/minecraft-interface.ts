@@ -65,6 +65,8 @@ export class MinecraftInterface {
     onPacket(data: Buffer) {
         const parsedData = decode(data)
 
+        console.log(parsedData)
+
         const decoded = nbtSendable.get(parsedData.get("channel")! as string)!(
             parsedData
         )

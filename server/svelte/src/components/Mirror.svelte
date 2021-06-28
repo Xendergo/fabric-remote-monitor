@@ -1,6 +1,9 @@
 <script lang="ts">
-    import { listen, send } from "../networking"
+    import { listen, send, stopListening } from "../networking"
     import { MirrorMessage, newStyle } from "../../../networking/sendableTypes"
+    import { obfuscatedText } from "../obfuscatedTextProvider"
+    import { onDestroy } from "svelte"
+    import type { Readable } from "svelte/store"
 
     let messages: MirrorMessage[] = []
 
@@ -13,17 +16,57 @@
         message = ""
     }
 
+    const unsubscribe: (() => void)[] = []
+
     function onMirrorMessage(msg: MirrorMessage) {
+        console.log(
+            msg.style.color,
+            msg.style.color
+                .map(v => v.toString(16).padEnd(2, "0"))
+                .reduce((a, v) => a + v)
+        )
+
         messages = [...messages, msg]
+
+        if (msg.style.obfuscated) {
+            const store = obfuscatedText(msg.message)
+            const index = messages.length - 1
+
+            unsubscribe.push(
+                store.subscribe(v => {
+                    messages[index].message = v
+                })
+            )
+        }
     }
 
     listen(MirrorMessage, onMirrorMessage)
+
+    onDestroy(() => {
+        stopListening(MirrorMessage, onMirrorMessage)
+        unsubscribe.forEach(v => v())
+    })
 </script>
 
 <div class="mirrorContainer">
     <div>
         {#each messages as message}
-            <p>{message.message}</p>
+            <p
+                style="
+                color: #{message.style.color
+                    .map(v => v.toString(16))
+                    .reduce((a, v) => a + v)};
+                font-weight: {message.style.bold ? 'bold' : 'normal'};
+                font-style: {message.style.italic ? 'italic' : 'normal'};
+                text-decoration: {message.style.underlined
+                    ? 'underline'
+                    : message.style.strikethrough
+                    ? 'line-through'
+                    : 'none'}
+            "
+            >
+                {message.message}
+            </p>
         {/each}
     </div>
     <input

@@ -93,9 +93,9 @@ export class LoginSuccessful extends Sendable {
 
     return new MirrorMessage(data.get("message")! as string, {
         color: [
-            Number(style & 0x0000ff00n) >> 8,
-            Number(style & 0x00ff0000n) >> 16,
-            Number(style & 0xff000000n) >> 24,
+            (Number(style) & 0xff000000) >>> 24,
+            (Number(style) & 0x00ff0000) >>> 16,
+            (Number(style) & 0x0000ff00) >>> 8,
         ],
         bold: (style & 1n) != 0n,
         italic: (style & 2n) != 0n,
@@ -128,9 +128,9 @@ export class MirrorMessage extends NbtSendable {
         flags |= this.style.underlined ? 4n : 0n
         flags |= this.style.strikethrough ? 8n : 0n
         flags |= this.style.obfuscated ? 16n : 0n
-        flags |= (BigInt(this.style.color[0]) & 255n) << 8n
+        flags |= (BigInt(this.style.color[2]) & 255n) << 8n
         flags |= (BigInt(this.style.color[1]) & 255n) << 16n
-        flags |= (BigInt(this.style.color[2]) & 255n) << 24n
+        flags |= (BigInt(this.style.color[0]) & 255n) << 24n
 
         ret.set("style", {
             type: "int",
