@@ -2,14 +2,15 @@ package fabric_remote_monitor;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.text.Text;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import fabric_remote_monitor.fakes.MinecraftServerInterface;
+import fabric_remote_monitor.util.Messages;
 
 public class FabricRemoteMonitor implements ModInitializer {
 
@@ -31,9 +32,12 @@ public class FabricRemoteMonitor implements ModInitializer {
 
             ServerInterface serverInterface = serverAdditions.getServerInterface();
 
-            NbtCompound testData = new NbtCompound();
+            serverInterface.Listen("MirrorMessage", (compound) -> {
+                String text = compound.getString("message");
+                Messages.BroadcastText(server, Text.of(text));
+            });
 
-            serverInterface.SendMessage("test", testData);
+            
         });
 
         ServerLifecycleEvents.SERVER_STOPPING.register((MinecraftServer server) -> {

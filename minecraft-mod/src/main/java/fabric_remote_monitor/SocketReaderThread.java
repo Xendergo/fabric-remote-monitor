@@ -10,14 +10,16 @@ import org.apache.logging.log4j.Level;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 
 public class SocketReaderThread extends Thread {
-    SocketReaderThread(Socket socket) {
+    SocketReaderThread(Socket socket, ServerInterface serverInterface) {
         super();
         this.socket = socket;
+        this.serverInterface = serverInterface;
 
         setName("Socket reader thread");
     }
     
     private Socket socket;
+    private ServerInterface serverInterface;
     
     private int currentLengthIndex = 0;
     private byte[] lengthBuffer = new byte[4];
@@ -82,6 +84,6 @@ public class SocketReaderThread extends Thread {
         buffer.setIndex(0, packet.length);
         var compound = buffer.readNbt();
 
-        FabricRemoteMonitor.log(Level.INFO, compound.asString());
+        serverInterface.OnPacket(compound);
     }
 }

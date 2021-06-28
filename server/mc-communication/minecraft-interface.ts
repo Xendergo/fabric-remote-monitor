@@ -1,6 +1,10 @@
 import net from "net"
 import { decode, TagType, encode } from "./nbt"
-import { NbtSendable, nbtSendable } from "../networking/sendableTypes"
+import {
+    NbtSendable,
+    nbtSendable,
+    sendableClasses,
+} from "../networking/sendableTypes"
 
 export class MinecraftInterface {
     constructor(port: number) {
@@ -65,6 +69,11 @@ export class MinecraftInterface {
             parsedData
         )
 
+        Object.setPrototypeOf(
+            decoded,
+            sendableClasses.get(decoded.channel!)!.prototype
+        )
+
         try {
             let channel = parsedData.get("channel") as string
 
@@ -77,6 +86,8 @@ export class MinecraftInterface {
     send<T extends NbtSendable>(data: T) {
         const converted = data.encode()
 
+        converted.set("channel", data.channel!)
+
         let encoded = encode(converted)
 
         let lenBuf = Buffer.alloc(4)
@@ -87,9 +98,11 @@ export class MinecraftInterface {
     }
 
     listen<T extends NbtSendable>(
-        channel: string,
+        channelClass: { channel(): string; new (...data: any[]): T },
         callback: (data: T) => void
     ) {
+        const channel = channelClass.channel()
+
         if (!this.listeners.has(channel)) this.listeners.set(channel, [])
 
         this.listeners.get(channel)!.push(callback as any)

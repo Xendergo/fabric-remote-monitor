@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.Level;
@@ -13,6 +14,7 @@ import org.apache.logging.log4j.Level;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.MinecraftServer;
 
 public class ServerInterface {
     public ServerInterface(File configFolder) {
@@ -36,7 +38,7 @@ public class ServerInterface {
 
             FabricRemoteMonitor.log(Level.INFO, "CONNECTED!!!!");
 
-            thisThread = new SocketReaderThread(socket);
+            thisThread = new SocketReaderThread(socket, this);
             thisThread.start();
         } catch (IOException e) {
             FabricRemoteMonitor.log(Level.ERROR, "Failed to connect to connect to the config server, printing stack trace: ");
@@ -69,7 +71,25 @@ public class ServerInterface {
         thisThread.Close();
     }
 
+    public void Listen(String channel, Consumer<NbtCompound> callback) {
+        if (!listeners.containsKey(channel)) {
+            listeners.put(channel, new HashSet<>());
+        }
+
+        listeners.get(channel).add(callback);
+    }
+
+    public void OnPacket(NbtCompound compound) {
+        String channel = compound.getString("channel");
+
+        if (!listeners.containsKey(channel)) return;
+
+        for (Consumer<NbtCompound> consumer : listeners.get(channel)) {
+            consumer.accept(compound);
+        }
+    }
+
     private Socket socket;
     private SocketReaderThread thisThread;
-    private HashMap<String, Consumer<String>> listeners = new HashMap<>();
+    private HashMap<String, HashSet<Consumer<NbtCompound>>> listeners = new HashMap<>();
 }

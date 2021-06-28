@@ -1,32 +1,15 @@
 <script lang="ts">
     import { listen, send } from "../networking"
-    import {
-        ClientMirrorMessage,
-        MirrorMessage,
-    } from "../../../networking/sendableTypes"
+    import { MirrorMessage, newStyle } from "../../../networking/sendableTypes"
 
-    interface message {
-        author: string
-        message: string
-    }
-
-    let messages: message[] = [
-        {
-            author: "Xendergo",
-            message: "Poggers?",
-        },
-        {
-            author: "Xendergo",
-            message: "Poggers.",
-        },
-    ]
+    let messages: MirrorMessage[] = []
 
     let message: string
 
     function sendMessage(e) {
         if (e.key !== "Enter") return
 
-        send<ClientMirrorMessage>(new ClientMirrorMessage(message))
+        send<MirrorMessage>(new MirrorMessage(message, newStyle({})))
         message = ""
     }
 
@@ -40,7 +23,7 @@
 <div class="mirrorContainer">
     <div>
         {#each messages as message}
-            <p>{"<"}{message.author}> {message.message}</p>
+            <p>{message.message}</p>
         {/each}
     </div>
     <input

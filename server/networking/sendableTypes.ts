@@ -1,4 +1,4 @@
-import { TagType } from "../mc-communication/nbt"
+import { TagType, int } from "../mc-communication/nbt"
 
 export abstract class Sendable {
     channel: string | undefined
@@ -13,8 +13,11 @@ export const nbtSendable: Map<
     (data: Map<string, TagType>) => NbtSendable
 > = new Map()
 
+export const sendableClasses: Map<string, { prototype: object }> = new Map()
+
 function MakeSendable<T extends Sendable>(channel: string) {
     return (constructor: Function) => {
+        sendableClasses.set(channel, constructor)
         constructor.prototype.channel = channel
     }
 }
@@ -24,6 +27,7 @@ function MakeNbtSendable<T extends NbtSendable>(
     decode: (data: Map<string, TagType>) => T
 ) {
     return (constructor: Function) => {
+        sendableClasses.set(channel, constructor)
         nbtSendable.set(channel, decode)
         constructor.prototype.channel = channel
     }
@@ -85,40 +89,83 @@ export class LoginSuccessful extends Sendable {
 }
 
 @MakeNbtSendable("MirrorMessage", data => {
-    return new MirrorMessage(
-        data.get("author")! as string,
-        data.get("message")! as string
-    )
+    const style = (data.get("style")! as int).value
+
+    return new MirrorMessage(data.get("message")! as string, {
+        color: [
+            Number(style & 0x0000ff00n) >> 8,
+            Number(style & 0x00ff0000n) >> 16,
+            Number(style & 0xff000000n) >> 24,
+        ],
+        bold: (style & 1n) != 0n,
+        italic: (style & 2n) != 0n,
+        underlined: (style & 4n) != 0n,
+        strikethrough: (style & 8n) != 0n,
+        obfuscated: (style & 16n) != 0n,
+    })
 })
 export class MirrorMessage extends NbtSendable {
-    constructor(author: string, message: string) {
+    constructor(message: string, style: Style) {
         super()
-        this.author = author
         this.message = message
+        this.style = style
     }
 
     static channel() {
         return this.prototype.channel as string
     }
 
-    author
     message
+    style
 
     encode() {
-        return new Map(Object.entries(this))
+        const ret: Map<string, TagType> = new Map()
+        ret.set("message", this.message)
+
+        let flags = 0n
+        flags |= this.style.bold ? 1n : 0n
+        flags |= this.style.italic ? 2n : 0n
+        flags |= this.style.underlined ? 4n : 0n
+        flags |= this.style.strikethrough ? 8n : 0n
+        flags |= this.style.obfuscated ? 16n : 0n
+        flags |= (BigInt(this.style.color[0]) & 255n) << 8n
+        flags |= (BigInt(this.style.color[1]) & 255n) << 16n
+        flags |= (BigInt(this.style.color[2]) & 255n) << 24n
+
+        ret.set("style", {
+            type: "int",
+            value: flags,
+        })
+
+        return ret
     }
 }
 
-@MakeSendable("ClientMirrorMessage")
-export class ClientMirrorMessage extends Sendable {
-    constructor(message: string) {
-        super()
-        this.message = message
+export function newStyle(style: StyleableWithOptionals): Style {
+    return {
+        color: style.color ?? [255, 255, 255],
+        bold: style.bold ?? false,
+        italic: style.italic ?? false,
+        underlined: style.underlined ?? false,
+        strikethrough: style.strikethrough ?? false,
+        obfuscated: style.obfuscated ?? false,
     }
+}
 
-    static channel() {
-        return this.prototype.channel as string
-    }
+interface StyleableWithOptionals {
+    color?: [number, number, number]
+    bold?: boolean
+    italic?: boolean
+    underlined?: boolean
+    strikethrough?: boolean
+    obfuscated?: boolean
+}
 
-    message
+interface Style {
+    color: [number, number, number]
+    bold: boolean
+    italic: boolean
+    underlined: boolean
+    strikethrough: boolean
+    obfuscated: boolean
 }

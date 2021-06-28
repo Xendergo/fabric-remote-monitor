@@ -1,4 +1,4 @@
-import type { Sendable } from "../../networking/sendableTypes"
+import { Sendable, sendableClasses } from "../../networking/sendableTypes"
 
 const listeners: Map<string, Set<(data: Sendable) => void>> = new Map()
 
@@ -7,6 +7,8 @@ const ws = new WebSocket(`ws://localhost:8000/ws`)
 
 ws.onmessage = e => {
     const data: Sendable = JSON.parse(e.data as string)
+
+    Object.setPrototypeOf(data, sendableClasses.get(data.channel!)!.prototype)
 
     listeners.get(data.channel)?.forEach(listener => {
         listener(data)

@@ -2,13 +2,13 @@ import ws from "ws"
 import { canCreateUser, checkPassword, User } from "../database/User"
 import { broadcast, WsConnectionManager } from "./WsConnectionManager"
 import {
-    ClientMirrorMessage,
     MirrorMessage,
     LoginDetails,
     LoginFailed,
     LoginSuccessful,
     SignupDetails,
 } from "./sendableTypes"
+import { minecraftInterface } from ".."
 
 export class ConnectedUser {
     constructor(socket: ws) {
@@ -43,11 +43,14 @@ export class ConnectedUser {
         )
 
         this.connectionManager.listen(
-            ClientMirrorMessage,
-            (data: ClientMirrorMessage) => {
-                broadcast<MirrorMessage>(
-                    new MirrorMessage(this.user!.username, data.message)
-                )
+            MirrorMessage,
+            (mirrorMessage: MirrorMessage) => {
+                mirrorMessage.message = `<${this.user!.username}> ${
+                    mirrorMessage.message
+                }`
+                broadcast<MirrorMessage>(mirrorMessage)
+
+                minecraftInterface.send(mirrorMessage)
             }
         )
     }

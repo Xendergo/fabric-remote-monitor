@@ -6,6 +6,7 @@ import fs from "fs"
 import path from "path"
 import { pki } from "node-forge"
 import { ConnectedUser } from "./networking/ConnectedUser"
+import { MirrorMessage } from "./networking/sendableTypes"
 
 if (!fs.existsSync(location)) {
     fs.mkdirSync(location, {
@@ -121,7 +122,13 @@ app.use(express.static("./build"))
 const server = app.listen(port)
 console.log(`Web server running on port ${port}`)
 
-const minecraftInterface = new MinecraftInterface(8080)
+export const minecraftInterface = new MinecraftInterface(8080)
+
+minecraftInterface.listen<MirrorMessage>(MirrorMessage, data => {
+    connectedUsers.forEach(user => {
+        user.connectionManager.send(data)
+    })
+})
 
 const wss = new ws.Server({
     server: server,
