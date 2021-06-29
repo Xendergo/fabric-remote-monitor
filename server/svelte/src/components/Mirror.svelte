@@ -87,6 +87,9 @@
         justify-content: space-between;
     }
 
+    .mirrorContainer div {
+        overflow-y: scroll;
+    }
     p {
         font-size: 1rem;
         font-family: "ubuntu mono", Consolas, "Courier New", monospace;

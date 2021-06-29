@@ -83,6 +83,13 @@ export class LoginFailed extends Sendable {
 
 @MakeSendable("LoginSuccessful")
 export class LoginSuccessful extends Sendable {
+    constructor(isAdmin: boolean) {
+        super()
+        this.isAdmin = isAdmin
+    }
+
+    isAdmin: boolean
+
     static channel() {
         return this.prototype.channel as string
     }

@@ -2,13 +2,18 @@ import { Sendable, sendableClasses } from "../../networking/sendableTypes"
 
 const listeners: Map<string, Set<(data: Sendable) => void>> = new Map()
 
-// const ws = new WebSocket(`ws://${location.host}/ws`)
-const ws = new WebSocket(`ws://localhost:8000/ws`)
+const ws = new WebSocket(`ws://${location.host}/ws`)
+
+export let isAdmin = false
+
+export function setAdmin(newAdmin: boolean) {
+    isAdmin = newAdmin
+}
 
 ws.onmessage = e => {
     const data: Sendable = JSON.parse(e.data as string)
 
-    Object.setPrototypeOf(data, sendableClasses.get(data.channel!)!.prototype)
+    Object.setPrototypeOf(data, sendableClasses.get(data.channel)!.prototype)
 
     listeners.get(data.channel)?.forEach(listener => {
         listener(data)

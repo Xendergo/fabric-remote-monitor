@@ -1,14 +1,30 @@
 <script lang="ts">
     import Login from "./pages/Login.svelte"
     import Home from "./pages/Home.svelte"
-    import { page } from "./pages/pageManager"
+    import Discord from "./pages/Discord.svelte"
+    import { page, Pages } from "./pages/pageManager"
+    import Tabs from "./components/Tabs.svelte"
+    import { fade } from "svelte/transition"
+
+    const conf = {
+        duration: 200,
+    }
 </script>
 
 <main>
-    {#if $page == "login"}
-        <Login />
-    {:else if $page == "home"}
-        <Home />
+    <Tabs />
+    {#if $page == Pages.Login}
+        <div in:fade={conf} out:fade={conf}>
+            <Login />
+        </div>
+    {:else if $page == Pages.Home}
+        <div in:fade={conf} out:fade={conf}>
+            <Home />
+        </div>
+    {:else if $page == Pages.Discord}
+        <div in:fade={conf} out:fade={conf}>
+            <Discord />
+        </div>
     {/if}
 </main>
 

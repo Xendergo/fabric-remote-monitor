@@ -1,5 +1,5 @@
 import net from "net"
-import { decode, TagType, encode } from "./nbt"
+import { decode, encode } from "./nbt"
 import {
     NbtSendable,
     nbtSendable,

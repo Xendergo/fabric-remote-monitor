@@ -14,7 +14,6 @@ import org.apache.logging.log4j.Level;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.MinecraftServer;
 
 public class ServerInterface {
     public ServerInterface(File configFolder) {

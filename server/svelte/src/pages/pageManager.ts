@@ -1,13 +1,20 @@
 import { writable, Readable } from "svelte/store"
 
-type pages = "login" | "home"
+export enum Pages {
+    Login,
+    Home,
+    Discord,
+}
 
-const { subscribe, set } = writable<pages>("login")
+export const pages: Pages[] = [Pages.Home]
+export const adminPages: Pages[] = [Pages.Discord]
 
-export const page: Readable<pages> = {
+const { subscribe, set } = writable<Pages>(Pages.Login)
+
+export const page: Readable<Pages> = {
     subscribe,
 }
 
-export function changePage(newPage: pages) {
+export function changePage(newPage: Pages) {
     set(newPage)
 }

@@ -19,7 +19,6 @@ export class ConnectedUser {
         this.connectionManager.listen(
             LoginDetails,
             async (data: LoginDetails) => {
-                console.log(data)
                 const maybeUser = await checkPassword(
                     data.username,
                     data.password
@@ -30,15 +29,10 @@ export class ConnectedUser {
                     return
                 }
 
-                this.connectionManager.send(new LoginSuccessful())
                 this.user = maybeUser
-            }
-        )
-
-        this.connectionManager.listen(
-            SignupDetails,
-            async (data: SignupDetails) => {
-                console.log(await canCreateUser(data.username))
+                this.connectionManager.send(
+                    new LoginSuccessful(this.user.admin)
+                )
             }
         )
 

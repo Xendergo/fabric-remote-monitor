@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { listen, send, stopListening } from "../networking"
+    import { setAdmin, listen, send, stopListening } from "../networking"
     import {
         LoginDetails,
         LoginFailed,
         LoginSuccessful,
     } from "../../../networking/sendableTypes"
     import { onDestroy } from "svelte"
-    import { changePage } from "./pageManager"
+    import { changePage, Pages } from "./pageManager"
 
     let username: string
     let password: string
@@ -21,8 +21,9 @@
         showErrorMessage = true
     }
 
-    function loginSuccessful() {
-        changePage("home")
+    function loginSuccessful(data: LoginSuccessful) {
+        setAdmin(data.isAdmin)
+        changePage(Pages.Home)
     }
 
     listen(LoginFailed, loginFailed)
