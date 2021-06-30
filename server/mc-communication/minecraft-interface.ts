@@ -1,10 +1,6 @@
 import net from "net"
 import { decode, encode } from "./nbt"
-import {
-    NbtSendable,
-    nbtSendable,
-    sendableClasses,
-} from "../networking/sendableTypes"
+import { NbtSendable, parseNbtInput } from "../networking/sendableTypesHelpers"
 
 export class MinecraftInterface {
     constructor(port: number) {
@@ -67,14 +63,7 @@ export class MinecraftInterface {
 
         console.log(parsedData)
 
-        const decoded = nbtSendable.get(parsedData.get("channel")! as string)!(
-            parsedData
-        )
-
-        Object.setPrototypeOf(
-            decoded,
-            sendableClasses.get(decoded.channel!)!.prototype
-        )
+        const decoded = parseNbtInput(parsedData)
 
         try {
             let channel = parsedData.get("channel") as string

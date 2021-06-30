@@ -1,12 +1,11 @@
 import ws from "ws"
-import { canCreateUser, checkPassword, User } from "../database/User"
+import { checkPassword, User } from "../database/User"
 import { broadcast, WsConnectionManager } from "./WsConnectionManager"
 import {
     MirrorMessage,
     LoginDetails,
     LoginFailed,
     LoginSuccessful,
-    SignupDetails,
 } from "./sendableTypes"
 import { minecraftInterface } from ".."
 

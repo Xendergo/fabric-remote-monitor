@@ -1,4 +1,4 @@
-import { Sendable, sendableClasses } from "../../networking/sendableTypes"
+import { parseInput, Sendable } from "../../networking/sendableTypesHelpers"
 
 const listeners: Map<string, Set<(data: Sendable) => void>> = new Map()
 
@@ -11,9 +11,7 @@ export function setAdmin(newAdmin: boolean) {
 }
 
 ws.onmessage = e => {
-    const data: Sendable = JSON.parse(e.data as string)
-
-    Object.setPrototypeOf(data, sendableClasses.get(data.channel)!.prototype)
+    const data = parseInput(e.data as string)
 
     listeners.get(data.channel)?.forEach(listener => {
         listener(data)

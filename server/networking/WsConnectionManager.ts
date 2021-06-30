@@ -1,6 +1,6 @@
 import ws from "ws"
 import { connectedUsers } from ".."
-import { Sendable, sendableClasses } from "./sendableTypes"
+import { parseInput, Sendable } from "./sendableTypesHelpers"
 import { ConnectedUser } from "./ConnectedUser"
 
 export class WsConnectionManager {
@@ -8,12 +8,7 @@ export class WsConnectionManager {
         this.socket = socket
 
         this.socket.onmessage = e => {
-            const data: Sendable = JSON.parse(e.data as string)
-
-            Object.setPrototypeOf(
-                data,
-                sendableClasses.get(data.channel!)!.prototype
-            )
+            const data = parseInput(e.data as string)
 
             this.listeners
                 .get(data.channel!)
