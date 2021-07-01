@@ -61,25 +61,46 @@ export function MakeNbtSendable<T extends NbtSendable>(
     }
 }
 
-type AllowedInputFieldTypes = "string" | "bool" | "number"
+export type AllowedInputFieldTypesNames = "string" | "bool" | "number"
+
+export type AllowedInputFieldTypes = string | boolean | number | null
+
+type AllowedInputFieldClasses =
+    | InputFieldClass<string | null>
+    | InputFieldClass<boolean>
+    | InputFieldClass<number | null>
 
 type InputFieldsTypes<T> = {
+    +readonly [Property in keyof T]: T[Property] extends string | null
+        ? "string"
+        : T[Property] extends boolean
+        ? "bool"
+        : T[Property] extends number | null
+        ? "number"
+        : never
+}
+
+type InputFieldsClassesConstraint<T> = {
     +readonly [Property in keyof T]: AllowedInputFieldTypes
 }
 
-type InputFieldsClasses<T> = {
-    +readonly [Property in keyof T]: AllowedInputFieldTypes
+export type InputFieldsClasses<T extends InputFieldsClassesConstraint<T>> = {
+    +readonly [Property in keyof T]: Extract<
+        InputFieldClass<T[Property]>,
+        AllowedInputFieldClasses
+    >
 }
 
-type InputFieldClass<T> = {
+export type InputFieldClass<T> = {
     channel(): string
-    new (value: T): { value: T }
+    type(): AllowedInputFieldTypesNames
+    new (value: T): { value: T; channel: string | undefined }
 }
 
 function generateClass(
     channel: string,
     key: string,
-    type: AllowedInputFieldTypes
+    type: AllowedInputFieldTypesNames
 ) {
     let ret: InputFieldClass<any>
     if (type == "string") {
@@ -91,6 +112,10 @@ function generateClass(
 
             static channel() {
                 return this.prototype.channel as string
+            }
+
+            static type() {
+                return type
             }
 
             value: string | null
@@ -106,6 +131,10 @@ function generateClass(
                 return this.prototype.channel as string
             }
 
+            static type() {
+                return type
+            }
+
             value: boolean
         }
     } /*if (type == "number")*/ else {
@@ -119,6 +148,10 @@ function generateClass(
                 return this.prototype.channel as string
             }
 
+            static type() {
+                return type
+            }
+
             value: number | null
         }
     }
@@ -128,11 +161,13 @@ function generateClass(
     return ret
 }
 
-export class InputFields<T> {
+export class InputFields<T extends InputFieldsClassesConstraint<T>>
+    implements InputFieldsInterface
+{
     constructor(channel: string, fields: InputFieldsTypes<T>) {
         this.fields = Object.entries(fields)
             .map(v => {
-                const [key, value] = v as [string, AllowedInputFieldTypes]
+                const [key, value] = v as [string, AllowedInputFieldTypesNames]
 
                 return [key, generateClass(channel, key, value)] as [
                     string,
@@ -145,16 +180,12 @@ export class InputFields<T> {
                     return a
                 },
                 {}
-            ) as unknown as InputFieldsClasses<T>
+            ) as InputFieldsClasses<T>
     }
 
     fields: InputFieldsClasses<T>
 }
 
-interface DiscordInput {
-    token: string | null
+export interface InputFieldsInterface {
+    fields: { [key: string]: AllowedInputFieldClasses }
 }
-
-export const discordInput = new InputFields<DiscordInput>("DiscordInput", {
-    token: "string",
-})

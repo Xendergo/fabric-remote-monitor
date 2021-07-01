@@ -1,5 +1,9 @@
 import { int, TagType } from "../mc-communication/nbt"
+import { AllowedInputFieldTypes } from "./sendableTypesHelpers"
 import {
+    InputFieldClass,
+    InputFields,
+    InputFieldsClasses,
     MakeNbtSendable,
     MakeSendable,
     NbtSendable,
@@ -149,3 +153,15 @@ interface Style {
     strikethrough: boolean
     obfuscated: boolean
 }
+
+interface DiscordInput {
+    token: string | null
+    bool: boolean
+    num: number | null
+}
+
+export const discordInput = new InputFields<DiscordInput>("DiscordInput", {
+    token: "string",
+    bool: "bool",
+    num: "number",
+})

@@ -8,6 +8,7 @@ import {
     LoginSuccessful,
 } from "./sendableTypes"
 import { minecraftInterface } from ".."
+import { discordInput } from "./sendableTypes"
 
 export class ConnectedUser {
     constructor(socket: ws) {
@@ -46,6 +47,16 @@ export class ConnectedUser {
                 minecraftInterface.send(mirrorMessage)
             }
         )
+
+        this.connectionManager.listen(discordInput.fields.token, msg => {
+            console.log(msg.value)
+        })
+        this.connectionManager.listen(discordInput.fields.bool, msg => {
+            console.log(msg.value)
+        })
+        this.connectionManager.listen(discordInput.fields.num, msg => {
+            console.log(msg.value)
+        })
     }
 
     socket: ws
