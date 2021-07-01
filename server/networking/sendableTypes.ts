@@ -1,9 +1,6 @@
 import { int, TagType } from "../mc-communication/nbt"
-import { AllowedInputFieldTypes } from "./sendableTypesHelpers"
 import {
-    InputFieldClass,
     InputFields,
-    InputFieldsClasses,
     MakeNbtSendable,
     MakeSendable,
     NbtSendable,
