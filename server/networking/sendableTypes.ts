@@ -153,12 +153,8 @@ interface Style {
 
 interface DiscordInput {
     token: string | null
-    bool: boolean
-    num: number | null
 }
 
 export const discordInput = new InputFields<DiscordInput>("DiscordInput", {
     token: "string",
-    bool: "bool",
-    num: "number",
 })

@@ -5,11 +5,12 @@
         InputFieldClass,
     } from "../../../../networking/sendableTypesHelpers"
 
-    export let field: InputFieldClass<AllowedInputFieldTypes>
+    export let Field: InputFieldClass<AllowedInputFieldTypes>
+    export let value: boolean = false
 
     function onChange(e) {
-        send(new field(e.target.checked))
+        send(new Field(e.target.checked))
     }
 </script>
 
-<input type="checkbox" on:change={onChange} />
+<input type="checkbox" on:change={onChange} bind:checked={value} />

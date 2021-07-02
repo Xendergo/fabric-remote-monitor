@@ -1,20 +1,22 @@
 <script lang="ts">
     import type {
+        AllowedInputFieldClasses,
         AllowedInputFieldTypes,
-        InputFieldClass,
     } from "../../../networking/sendableTypesHelpers"
     import String from "./InputFieldTypes/String.svelte"
     import Bool from "./InputFieldTypes/Bool.svelte"
     import Number from "./InputFieldTypes/Number.svelte"
 
-    export let field: InputFieldClass<AllowedInputFieldTypes>
-    let type = field.type()
+    export let Field: AllowedInputFieldClasses
+    let type = Field.type()
+
+    export let value
 </script>
 
 {#if type == "string"}
-    <String {field} />
+    <String {Field} bind:value />
 {:else if type == "bool"}
-    <Bool {field} />
+    <Bool {Field} bind:value />
 {:else if type == "number"}
-    <Number {field} />
+    <Number {Field} bind:value />
 {/if}

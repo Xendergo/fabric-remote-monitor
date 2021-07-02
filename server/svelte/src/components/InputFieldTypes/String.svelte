@@ -5,12 +5,21 @@
         InputFieldClass,
     } from "../../../../networking/sendableTypesHelpers"
 
-    export let field: InputFieldClass<AllowedInputFieldTypes>
+    export let Field: InputFieldClass<AllowedInputFieldTypes>
+
+    export let value: string | null = null
+
+    let elemValue
+
+    $: {
+        elemValue = value?.toString() ?? ""
+    }
 
     function onChange(e) {
-        const value: string = e.target.value
-        send(new field(value == "" ? null : value))
+        const newValue: string = e.target.value
+        value = newValue == "" ? null : newValue
+        send(new Field(value))
     }
 </script>
 
-<input on:change={onChange} />
+<input on:change={onChange} bind:value={elemValue} />

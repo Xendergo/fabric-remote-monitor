@@ -1,18 +1,16 @@
 import ws from "ws"
 import { connectedUsers } from ".."
-import { parseInput, Sendable } from "./sendableTypesHelpers"
+import { ListenerManager, parseInput, Sendable } from "./sendableTypesHelpers"
 import { ConnectedUser } from "./ConnectedUser"
 
-export class WsConnectionManager {
+export class WsConnectionManager extends ListenerManager<Sendable, string> {
     constructor(socket: ws, user: ConnectedUser) {
+        super()
+
         this.socket = socket
 
         this.socket.onmessage = e => {
-            const data = parseInput(e.data as string)
-
-            this.listeners
-                .get(data.channel!)
-                ?.forEach(callback => callback(data))
+            this.onData(e.data as string)
         }
 
         this.socket.onclose = e => {
@@ -20,39 +18,23 @@ export class WsConnectionManager {
         }
     }
 
-    listen<T extends Sendable>(
-        channelClass: { channel(): string; new (...data: any[]): T },
-        callback: (data: T) => void
-    ) {
-        const channel = channelClass.channel()
-
-        if (!this.listeners.has(channel)) {
-            this.listeners.set(channel, new Set())
-        }
-
-        this.listeners.get(channel)!.add(callback as any)
-    }
-
-    stopListening<T extends Sendable>(
-        channelClass: { channel(): string; new (...data: any[]): T },
-        callback: (data: Sendable) => void
-    ) {
-        const channel = channelClass.channel()
-        if (!this.listeners.has(channel)) return
-
-        this.listeners.get(channel)!.delete(callback)
-    }
-
-    send<T extends Sendable>(dataObj: T) {
+    encode(dataObj: Sendable) {
         let data = dataObj as { [key: string]: any }
 
         data.channel = Object.getPrototypeOf(dataObj).channel
 
-        this.socket.send(JSON.stringify(data))
+        return JSON.stringify(data)
+    }
+
+    decode(data: string) {
+        return parseInput(data)
+    }
+
+    transmit(data: string) {
+        this.socket.send(data)
     }
 
     socket: ws
-    listeners: Map<string, Set<(data: Sendable) => void>> = new Map()
 }
 
 export function broadcast<T extends Sendable>(dataObj: T) {

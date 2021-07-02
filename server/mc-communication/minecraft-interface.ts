@@ -1,9 +1,15 @@
 import net from "net"
 import { decode, encode } from "./nbt"
-import { NbtSendable, parseNbtInput } from "../networking/sendableTypesHelpers"
+import {
+    NbtSendable,
+    parseNbtInput,
+    ListenerManager,
+} from "../networking/sendableTypesHelpers"
 
-export class MinecraftInterface {
+export class MinecraftInterface extends ListenerManager<NbtSendable, Buffer> {
     constructor(port: number) {
+        super()
+
         this.server = net.createServer()
         this.server.listen(port)
 
@@ -53,53 +59,33 @@ export class MinecraftInterface {
             this.currentBytesLeft--
 
             if (this.currentBytesLeft == 0) {
-                this.onPacket(this.currentPacket)
+                this.onData(this.currentPacket)
             }
         }
     }
 
-    onPacket(data: Buffer) {
-        const parsedData = decode(data)
-
-        console.log(parsedData)
-
-        const decoded = parseNbtInput(parsedData)
-
-        try {
-            let channel = parsedData.get("channel") as string
-
-            ;(this.listeners.get(channel) ?? []).forEach(listener => {
-                listener(decoded)
-            })
-        } catch {}
-    }
-
-    send<T extends NbtSendable>(data: T) {
+    encode(data: NbtSendable) {
         const converted = data.encode()
 
         converted.set("channel", data.channel!)
 
-        let encoded = encode(converted)
-
-        let lenBuf = Buffer.alloc(4)
-        lenBuf.writeUInt32BE(encoded.length)
-
-        this.socket?.write(lenBuf)
-        this.socket?.write(encoded)
+        return encode(converted)
     }
 
-    listen<T extends NbtSendable>(
-        channelClass: { channel(): string; new (...data: any[]): T },
-        callback: (data: T) => void
-    ) {
-        const channel = channelClass.channel()
+    decode(data: Buffer) {
+        const parsedData = decode(data)
 
-        if (!this.listeners.has(channel)) this.listeners.set(channel, [])
+        return parseNbtInput(parsedData)
+    }
 
-        this.listeners.get(channel)!.push(callback as any)
+    transmit(data: Buffer) {
+        let lenBuf = Buffer.alloc(4)
+        lenBuf.writeUInt32BE(data.length)
+
+        this.socket?.write(lenBuf)
+        this.socket?.write(data)
     }
 
     private server
     private socket?: net.Socket
-    private listeners: Map<string, ((data: NbtSendable) => void)[]> = new Map()
 }
