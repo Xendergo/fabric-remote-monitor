@@ -1,5 +1,17 @@
-import e from "express"
 import { db } from "./Database"
+import { getSettings } from "./Settings"
+
+const setAdmin = db.prepare(
+    "UPDATE users SET admin = $admin WHERE username = $username"
+)
+const getUser = db.prepare("SELECT * FROM users WHERE username = $username")
+const insertUser = db.prepare(`INSERT INTO users (
+    username,
+    password
+) VALUES (
+    $username,
+    $password
+)`)
 
 export class User {
     constructor(username: string, admin: boolean, discordId?: string) {
@@ -15,110 +27,76 @@ export class User {
     setAdminStatus(admin: boolean) {
         this.admin = admin
 
-        db.run("UPDATE users SET admin = $admin WHERE username = $username", {
-            $admin: admin,
-            $username: this.username
+        setAdmin.run({
+            admin: admin,
+            username: this.username,
         })
     }
 }
 
-export function getUserByUsername(username: string): Promise<User> {
-    return new Promise((resolve, reject) => {
-        db.get("SELECT * FROM users WHERE username = $username", {
-            $username: username
-        }, (err, value) => {
-            if (err) {
-                reject(err)
-                return
-            }
-
-            if (value == undefined) {
-                reject("There's no user with that username")
-                return
-            }
-
-            resolve(new User(value.username, value.admin == 1, value.discordId))
-        })
+export function getUserByUsername(username: string): User {
+    const user = getUser.get({
+        username: username,
     })
+
+    if (user == undefined) {
+        throw new Error("There's no user with that username")
+    }
+
+    return new User(user.username, user.admin == 1, user.discordId)
 }
 
-export function checkPassword(username: string, password: string): Promise<User | null> {
+export function checkPassword(username: string, password: string): User | null {
     const hashed = hashPassword(password)
 
-    return new Promise((resolve, reject) => {
-        db.get("SELECT * FROM users WHERE username = $username", {
-            $username: username
-        }, (err, value) => {
-            if (err) {
-                reject(err)
-                return
-            }
-
-            if (value == undefined) {
-                reject("There's no user with that username")
-                return
-            }
-
-            if (hashed != value.password) {
-                resolve(null)
-                return
-            }
-
-            resolve(new User(value.username, value.admin == 1, value.discordId))
-        })
+    const user = getUser.get({
+        username: username,
     })
+
+    if (user == undefined) {
+        return null
+    }
+
+    if (hashed != user.password) {
+        return null
+    }
+
+    return new User(user.username, user.admin == 1, user.discordId)
 }
 
-export function createUser(username: string, password: string): Promise<User> {
+export function createUser(username: string, password: string): User {
     const hashed = hashPassword(password)
 
-    return new Promise((resolve, reject) => {
-        db.run(`INSERT INTO users (
-            username,
-            password
-        ) VALUES (
-            $username,
-            $password
-        )`, {
-            $username: username,
-            $password: hashed
-        }, (err) => {
-            if (err) {
-                reject(err)
-                return
-            }
-
-            resolve(new User(username, false))
-        })
+    insertUser.run({
+        username: username,
+        password: hashed,
     })
+
+    return new User(username, false)
 }
 
-export function canCreateUser(username: string): Promise<true | string> {
-    return new Promise((resolve, reject) => {
-        db.get(`SELECT * FROM users WHERE username = $username`, {
-            $username: username
-        }, (data) => {
-            if (data != null) {
-                resolve("That user already exists")
-            }
-
-            db.get(`SELECT * FROM settings ASC LIMIT 1`, (err, data) => {
-                if (data.allowedUsers == null) {
-                    resolve(true)
-                    return
-                }
-
-                let allowedUsers: string[] = JSON.parse(data.allowedUsers)
-
-                if (allowedUsers.includes(username)) {
-                    resolve(true)
-                    return
-                }
-
-                resolve("That username doesn't have permission to create an account")
-            })
-        })
+export function canCreateUser(username: string): true | string {
+    const maybeUser = getUser.get({
+        username: username,
     })
+
+    if (maybeUser != null) {
+        return "That user already exists"
+    }
+
+    const settings = getSettings()
+
+    if (settings.allowedUsers == null) {
+        return true
+    }
+
+    const allowedUsers = settings.allowedUsers
+
+    if (allowedUsers.includes(username)) {
+        return true
+    }
+
+    return "That username doesn't have permission to create an account"
 }
 
 function hashPassword(password: string): string {

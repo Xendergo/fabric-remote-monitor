@@ -1,22 +1,33 @@
 <script lang="ts">
-    import { listen, send } from "../networking"
+    import { listen, send, stopListening } from "../networking"
 
     import type {
         AllowedInputFieldTypes,
         InputFieldsInterface,
+        Sendable,
     } from "../../../networking/sendableTypesHelpers"
     import InputField from "./InputField.svelte"
+    import { onDestroy } from "svelte"
 
     export let inputFields: InputFieldsInterface
-
-    send(new inputFields.RequestDefault())
 
     let entries = Object.entries(inputFields.fields)
 
     let currentValues: { [key: string]: AllowedInputFieldTypes } = {}
 
-    listen(inputFields.Everything, data => {
+    function onEverything(
+        data: Sendable & { [key: string]: AllowedInputFieldTypes }
+    ) {
+        console.log(data)
         currentValues = data
+    }
+
+    listen(inputFields.Everything, onEverything)
+
+    send(new inputFields.RequestDefault())
+
+    onDestroy(() => {
+        stopListening(inputFields.Everything, onEverything)
     })
 </script>
 

@@ -40,4 +40,22 @@ class ClientConnectionManager extends ListenerManager<Sendable, string> {
     ws
 }
 
-export const { listen, stopListening, send } = new ClientConnectionManager()
+const clientConnectionManager = new ClientConnectionManager()
+
+export function listen<T extends Sendable>(
+    channelClass: { channel(): string; new (...data: any[]): T },
+    callback: (data: T) => void
+) {
+    clientConnectionManager.listen(channelClass, callback)
+}
+
+export function stopListening<T extends Sendable>(
+    channelClass: { channel(): string; new (...data: any[]): T },
+    callback: (data: Sendable) => void
+) {
+    clientConnectionManager.stopListening(channelClass, callback)
+}
+
+export function send<T extends Sendable>(data: T) {
+    clientConnectionManager.send(data)
+}

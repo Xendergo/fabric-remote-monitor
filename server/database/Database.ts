@@ -1,52 +1,69 @@
 import path from "path"
-import sqlite3 from "sqlite3"
+import sqlite3 from "better-sqlite3"
 import { match } from "ts-pattern"
 
 const platform = process.platform
 
 export const location = match(platform)
-    .with("linux", () => path.join(process.env.HOME!, ".config/fabric-remote-monitor"))
-    .with("win32", () => path.join(process.env.CSIDL_APPDATA!, "fabric-remote-monitor"))
-    .with("darwin", () => path.join(process.env.HOME!, "Library/Application Support/fabric-remote-monitor"))
+    .with("linux", () =>
+        path.join(process.env.HOME!, ".config/fabric-remote-monitor")
+    )
+    .with("win32", () =>
+        path.join(process.env.CSIDL_APPDATA!, "fabric-remote-monitor")
+    )
+    .with("darwin", () =>
+        path.join(
+            process.env.HOME!,
+            "Library/Application Support/fabric-remote-monitor"
+        )
+    )
     .otherwise(() => {
         throw new Error("You're using an unsupported operating system")
     })
 
-export const db = new sqlite3.Database(path.join(location, "db.sqlite"))
+export const db = new sqlite3(path.join(location, "db.sqlite"))
 
-db.run(`
+db.prepare(
+    `
 CREATE TABLE IF NOT EXISTS users (
     username TEXT PRIMARY KEY,
     discordId TEXT,
     password TEXT NOT NULL,
     admin INTEGER DEFAULT 0
 );
-`)
+`
+).run()
 
-db.run(`
+db.prepare(
+    `
 CREATE TABLE IF NOT EXISTS settings (
     allowedUsers TEXT,
     proximityChat INTEGER DEFAULT 0,
     discordToken TEXT
 );
-`, () => {
-    db.get(`SELECT COUNT(*) FROM settings`, (err, v) => {
-        if (v["COUNT(*)"] == 0) {
-            db.run(`INSERT INTO settings (proximityChat) VALUES (0)`)
-        }
-    })
-})
+`
+).run()
 
-db.run(`
+const settings = db.prepare(`SELECT COUNT(*) FROM settings`).get()
+
+if (settings["COUNT(*)"] == 0) {
+    db.prepare(`INSERT INTO settings (proximityChat) VALUES (0)`).run()
+}
+
+db.prepare(
+    `
 CREATE TABLE IF NOT EXISTS guildSettings (
     id TEXT PRIMARY KEY,
     mirror TEXT
 );
-`)
+`
+).run()
 
-db.run(`
+db.prepare(
+    `
 CREATE TABLE IF NOT EXISTS mods (
     source TEXT NOT NULL,
     file TEXT NOT NULL
 );
-`)
+`
+).run()

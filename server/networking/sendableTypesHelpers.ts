@@ -350,24 +350,26 @@ function everythingGenerator<T extends InputFieldsClassesConstraint<T>>(
     channel: string
 ) {
     class NewClass extends Sendable {
+        [key: string]: AllowedInputFieldTypes | undefined
+
         constructor(values: T) {
             super()
 
             for (const key in values) {
-                Object.defineProperty(this, key, {
-                    get: () => values[key],
-                })
+                this[key as string] = values[key] as AllowedInputFieldTypes
             }
+
+            console.log(this, values)
         }
 
         static channel() {
-            return channel
+            return this.prototype.channel as string
         }
-
-        channel = channel
     }
 
-    return NewClass as {
+    NewClass.prototype.channel = channel
+
+    return NewClass as unknown as {
         new (values: T): Sendable & T
         channel(): string
     }
@@ -408,11 +410,10 @@ export class InputFields<T extends InputFieldsClassesConstraint<T>>
         this.Everything = everythingGenerator<T>(channel)
         this.RequestDefault = class extends Sendable {
             static channel() {
-                return `${channel}:default`
+                return this.prototype.channel as string
             }
-
-            channel = `${channel}:default`
         }
+        this.RequestDefault.prototype.channel = `${channel}:default`
     }
 
     /**

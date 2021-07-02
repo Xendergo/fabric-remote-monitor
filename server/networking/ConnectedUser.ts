@@ -8,7 +8,7 @@ import {
     LoginSuccessful,
 } from "./sendableTypes"
 import { minecraftInterface } from ".."
-import { discordInput } from "./sendableTypes"
+import { discordListeners } from "./ConfigMenus/Discord"
 
 export class ConnectedUser {
     constructor(socket: ws) {
@@ -16,25 +16,17 @@ export class ConnectedUser {
 
         this.connectionManager = new WsConnectionManager(this.socket, this)
 
-        this.connectionManager.listen(
-            LoginDetails,
-            async (data: LoginDetails) => {
-                const maybeUser = await checkPassword(
-                    data.username,
-                    data.password
-                )
+        this.connectionManager.listen(LoginDetails, (data: LoginDetails) => {
+            const maybeUser = checkPassword(data.username, data.password)
 
-                if (!maybeUser) {
-                    this.connectionManager.send(new LoginFailed())
-                    return
-                }
-
-                this.user = maybeUser
-                this.connectionManager.send(
-                    new LoginSuccessful(this.user.admin)
-                )
+            if (!maybeUser) {
+                this.connectionManager.send(new LoginFailed())
+                return
             }
-        )
+
+            this.user = maybeUser
+            this.connectionManager.send(new LoginSuccessful(this.user.admin))
+        })
 
         this.connectionManager.listen(
             MirrorMessage,
@@ -48,15 +40,7 @@ export class ConnectedUser {
             }
         )
 
-        this.connectionManager.listen(discordInput.fields.token, msg => {
-            console.log(msg.value)
-        })
-        this.connectionManager.listen(discordInput.fields.bool, msg => {
-            console.log(msg.value)
-        })
-        this.connectionManager.listen(discordInput.fields.num, msg => {
-            console.log(msg.value)
-        })
+        discordListeners(this.connectionManager)
     }
 
     socket: ws

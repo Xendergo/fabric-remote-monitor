@@ -8,8 +8,8 @@
     import { onDestroy } from "svelte"
     import { changePage, Pages } from "./pageManager"
 
-    let username: string
-    let password: string
+    let username: string = ""
+    let password: string = ""
 
     function sendLoginDetails() {
         send(new LoginDetails(username, password))
