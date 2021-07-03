@@ -7,6 +7,9 @@ const setAdmin = db.prepare(
 const setPassword = db.prepare(
     "UPDATE users SET password = $password WHERE username = $username"
 )
+const setDiscordId = db.prepare(
+    "UPDATE users SET discordId = $id WHERE username = $username"
+)
 const getUser = db.prepare("SELECT * FROM users WHERE username = $username")
 const insertUser = db.prepare(`INSERT INTO users (
     username,
@@ -53,6 +56,15 @@ export class User {
         })
 
         return null
+    }
+
+    setDiscordId(newId: string) {
+        setDiscordId.run({
+            id: newId,
+            username: this.username,
+        })
+
+        this.discordId = newId
     }
 }
 

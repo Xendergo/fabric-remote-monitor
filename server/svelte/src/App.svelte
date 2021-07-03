@@ -6,6 +6,8 @@
     import Tabs from "./components/Tabs.svelte"
     import { fade } from "svelte/transition"
     import Account from "./pages/Account.svelte"
+    import { popups } from "./popupManager"
+    import Popup from "./components/Popup.svelte"
 
     const conf = {
         duration: 200,
@@ -13,6 +15,9 @@
 </script>
 
 <main>
+    {#if $popups.length != 0}
+        <Popup title={$popups[0].title} text={$popups[0].text} />
+    {/if}
     <Tabs />
     {#if $page == Pages.Login}
         <div in:fade={conf} out:fade={conf}>

@@ -144,6 +144,22 @@ interface Style {
 
 type PartialStyle = Partial<Style>
 
+@MakeSendable("Popup")
+export class Popup extends Sendable {
+    constructor(title: string, text: string) {
+        super()
+        this.title = title
+        this.text = text
+    }
+
+    static channel() {
+        return this.prototype.channel as string
+    }
+
+    title
+    text
+}
+
 interface DiscordInput {
     token: string | null
 }
