@@ -4,6 +4,9 @@ import { getSettings } from "./Settings"
 const setAdmin = db.prepare(
     "UPDATE users SET admin = $admin WHERE username = $username"
 )
+const setPassword = db.prepare(
+    "UPDATE users SET password = $password WHERE username = $username"
+)
 const getUser = db.prepare("SELECT * FROM users WHERE username = $username")
 const insertUser = db.prepare(`INSERT INTO users (
     username,
@@ -31,6 +34,25 @@ export class User {
             admin: admin,
             username: this.username,
         })
+    }
+
+    resetPassword(current: string, newPassword: string): string | null {
+        const hashedCurrent = hashPassword(current)
+
+        const user = getUser.get({
+            username: this.username,
+        })
+
+        if (user.password != hashedCurrent) {
+            return "original password is incorrect"
+        }
+
+        setPassword.run({
+            password: newPassword,
+            username: this.username,
+        })
+
+        return null
     }
 }
 

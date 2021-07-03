@@ -149,5 +149,31 @@ interface DiscordInput {
 }
 
 export const discordInput = new InputFields<DiscordInput>("DiscordInput", {
-    token: "string",
+    token: {
+        type: "string",
+    },
 })
+
+interface ResetPassword {
+    password: string
+    newPassword: string
+}
+
+export const resetPassword = new InputFields<ResetPassword>(
+    "ResetPassword",
+    {
+        password: {
+            type: "string",
+            confidential: true,
+            placeholderLabel: true,
+            customLabel: "Current password",
+        },
+        newPassword: {
+            type: "string",
+            confidential: true,
+            placeholderLabel: true,
+            customLabel: "New password",
+        },
+    },
+    "Reset password"
+)

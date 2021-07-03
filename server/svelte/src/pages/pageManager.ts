@@ -4,9 +4,10 @@ export enum Pages {
     Login,
     Home,
     Discord,
+    Account,
 }
 
-export const pages: Pages[] = [Pages.Home]
+export const pages: Pages[] = [Pages.Home, Pages.Account]
 export const adminPages: Pages[] = [Pages.Discord]
 
 const { subscribe, set } = writable<Pages>(Pages.Login)

@@ -18,7 +18,7 @@ export class WsConnectionManager extends ListenerManager<Sendable, string> {
         }
     }
 
-    encode(dataObj: Sendable) {
+    protected encode(dataObj: Sendable) {
         let data = dataObj as { [key: string]: any }
 
         data.channel = Object.getPrototypeOf(dataObj).channel
@@ -26,11 +26,11 @@ export class WsConnectionManager extends ListenerManager<Sendable, string> {
         return JSON.stringify(data)
     }
 
-    decode(data: string) {
+    protected decode(data: string) {
         return parseInput(data)
     }
 
-    transmit(data: string) {
+    protected transmit(data: string) {
         this.socket.send(data)
     }
 

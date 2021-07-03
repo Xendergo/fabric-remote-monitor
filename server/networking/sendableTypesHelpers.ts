@@ -187,6 +187,41 @@ export function MakeNbtSendable<T extends NbtSendable>(
 type AllowedInputFieldTypesNames = "string" | "bool" | "number"
 
 /**
+ * A generic representation of {@link InputFieldOptions}, used in the definition of {@link InputFieldsTypes}
+ */
+type InputFieldOptionsGeneric<T extends AllowedInputFieldTypesNames> = {
+    type: T
+
+    /**
+     * Whether the input field should be submitted on a button press or on change
+     * If set, the text is the button text
+     */
+    buttonSubmit?: string
+
+    /**
+     * Whether the text should be hidden like a password input
+     * Only works for string input types
+     */
+    confidential?: boolean
+
+    /**
+     * Whether the label should be displayed as a placeholder within the text box
+     */
+    placeholderLabel?: boolean
+
+    /**
+     * If set, use this text as the label instead of the name of the field in the interface
+     */
+    customLabel?: string
+}
+
+/**
+ * Options for how an input field looks and works
+ */
+export type InputFieldOptions =
+    InputFieldOptionsGeneric<AllowedInputFieldTypesNames>
+
+/**
  * The types allowed to be sent via an {@link InputFields} instance
  */
 export type AllowedInputFieldTypes = string | boolean | number | null
@@ -222,20 +257,22 @@ type InputFieldsClassesConstraint<T> = {
  *
  * // converts to:
  * type transformed = {
- *   readonly str: "string"
- *   readonly bool: "bool"
- *   readonly num: "number"
+ *   readonly str: InputFieldOptionsGeneric<"string">
+ *   readonly bool: InputFieldOptionsGeneric<"bool">
+ *   readonly num: InputFieldOptionsGeneric<"number">
  * }
  * ```
  */
 type InputFieldsTypes<T extends InputFieldsClassesConstraint<T>> = {
-    +readonly [Property in keyof T]: T[Property] extends string | null
-        ? "string"
-        : T[Property] extends boolean
-        ? "bool"
-        : T[Property] extends number | null
-        ? "number"
-        : never
+    +readonly [Property in keyof T]: InputFieldOptionsGeneric<
+        T[Property] extends string | null
+            ? "string"
+            : T[Property] extends boolean
+            ? "bool"
+            : T[Property] extends number | null
+            ? "number"
+            : never
+    >
 }
 
 /**
@@ -373,6 +410,11 @@ function everythingGenerator<T extends InputFieldsClassesConstraint<T>>(
     }
 }
 
+export interface ResponseInterface {
+    status: "Error" | "Success"
+    text: string
+}
+
 /**
  * A class representing a list of values, meant to make sending lots of unique values, specifically config menus on the client side, more convienient.
  *
@@ -386,13 +428,18 @@ export class InputFields<T extends InputFieldsClassesConstraint<T>>
     /**
      * @param channel The channel this InputField transfers data on
      * @param fields The data types of the values in type parameter `T`
+     * @param submitAsEverything If this is set, send the entire input field through the Everything channel & use the text for the submit button
      */
-    constructor(channel: string, fields: InputFieldsTypes<T>) {
+    constructor(
+        channel: string,
+        fields: InputFieldsTypes<T>,
+        submitAsEverything: string | null = null
+    ) {
         this.fields = Object.entries(fields)
             .map(v => {
-                const [key, value] = v as [string, AllowedInputFieldTypesNames]
+                const [key, value] = v as [string, InputFieldOptions]
 
-                return [key, generateClass(channel, key, value)] as [
+                return [key, generateClass(channel, key, value.type)] as [
                     string,
                     InputFieldClass<AllowedInputFieldTypes>
                 ]
@@ -405,6 +452,10 @@ export class InputFields<T extends InputFieldsClassesConstraint<T>>
                 {}
             ) as InputFieldsClasses<T>
 
+        this.fieldOptions = fields
+
+        this.sendAsEverything = submitAsEverything
+
         this.Everything = everythingGenerator<T>(channel)
         this.RequestDefault = class extends Sendable {
             static channel() {
@@ -412,12 +463,38 @@ export class InputFields<T extends InputFieldsClassesConstraint<T>>
             }
         }
         this.RequestDefault.prototype.channel = `${channel}:default`
+
+        this.Response = class extends Sendable implements ResponseInterface {
+            constructor(status: "Error" | "Success", text: string) {
+                super()
+                this.status = status
+                this.text = text
+            }
+
+            static channel() {
+                return this.prototype.channel as string
+            }
+
+            status: "Error" | "Success"
+            text: string
+        }
+        this.Response.prototype.channel = `${channel}:Response`
     }
 
     /**
      * A record of classes that can be passed into `send` implementations
      */
     fields: InputFieldsClasses<T>
+
+    /**
+     * If this is not null, then submit the data through Everything & use the text as the text for the submit button
+     */
+    sendAsEverything: string | null
+
+    /**
+     * A record of options for how the data should be presented & submitted
+     */
+    fieldOptions: InputFieldsTypes<T>
 
     /**
      * A class that can be passed into `send` implementations that allows for transferring all data in the InputFields instance
@@ -434,6 +511,15 @@ export class InputFields<T extends InputFieldsClassesConstraint<T>>
         new (): Sendable
         channel(): string
     }
+
+    /**
+     * A class that can be passed into `send` implementations that represent either an error or success message
+     */
+    Response: {
+        new (status: "Error" | "Success", text: string): Sendable &
+            ResponseInterface
+        channel(): string
+    }
 }
 
 /**
@@ -441,14 +527,21 @@ export class InputFields<T extends InputFieldsClassesConstraint<T>>
  */
 export interface InputFieldsInterface {
     fields: { [key: string]: AllowedInputFieldClasses }
+    fieldOptions: { [key: string]: InputFieldOptions }
+    sendAsEverything: string | null
     Everything: {
-        new (values: never): Sendable & {
+        new (values: any): Sendable & {
             [key: string]: AllowedInputFieldTypes
         }
         channel(): string
     }
     RequestDefault: {
         new (): Sendable
+        channel(): string
+    }
+    Response: {
+        new (status: "Error" | "Success", text: string): Sendable &
+            ResponseInterface
         channel(): string
     }
 }

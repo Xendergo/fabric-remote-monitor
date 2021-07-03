@@ -5,6 +5,7 @@
     import { page, Pages } from "./pages/pageManager"
     import Tabs from "./components/Tabs.svelte"
     import { fade } from "svelte/transition"
+    import Account from "./pages/Account.svelte"
 
     const conf = {
         duration: 200,
@@ -24,6 +25,10 @@
     {:else if $page == Pages.Discord}
         <div in:fade={conf} out:fade={conf}>
             <Discord />
+        </div>
+    {:else if $page == Pages.Account}
+        <div in:fade={conf} out:fade={conf}>
+            <Account />
         </div>
     {/if}
 </main>

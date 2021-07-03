@@ -9,6 +9,7 @@ import {
 } from "./sendableTypes"
 import { minecraftInterface } from ".."
 import { discordListeners } from "./ConfigMenus/Discord"
+import { accountListeners } from "./ConfigMenus/Account"
 
 export class ConnectedUser {
     constructor(socket: ws) {
@@ -29,6 +30,8 @@ export class ConnectedUser {
             }
 
             this.user = maybeUser
+
+            accountListeners(this.connectionManager, this.user)
 
             if (this.user.admin) {
                 this.listenAdminOnly()

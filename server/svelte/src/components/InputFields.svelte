@@ -4,6 +4,7 @@
     import type {
         AllowedInputFieldTypes,
         InputFieldsInterface,
+        ResponseInterface,
         Sendable,
     } from "../../../networking/sendableTypesHelpers"
     import InputField from "./InputField.svelte"
@@ -18,11 +19,19 @@
     function onEverything(
         data: Sendable & { [key: string]: AllowedInputFieldTypes }
     ) {
-        console.log(data)
         currentValues = data
     }
 
+    let responseMessage = ""
+    let status: "Error" | "Success" = "Error"
+
+    function onResponse(data: Sendable & ResponseInterface) {
+        responseMessage = data.text
+        status = data.status
+    }
+
     listen(inputFields.Everything, onEverything)
+    listen(inputFields.Response, onResponse)
 
     send(new inputFields.RequestDefault())
 
@@ -32,5 +41,32 @@
 </script>
 
 {#each entries as [key, Field]}
-    {key} - <InputField {Field} bind:value={currentValues[key]} />
+    <InputField
+        {Field}
+        bind:value={currentValues[key]}
+        fieldOptions={inputFields.fieldOptions[key]}
+        label={inputFields.fieldOptions[key].customLabel ?? key}
+    /><br />
 {/each}
+{#if inputFields.sendAsEverything}
+    <button
+        on:click={() => {
+            send(new inputFields.Everything(currentValues))
+        }}
+    >
+        {inputFields.sendAsEverything}
+    </button>
+{/if}
+<p class:Error={status == "Error"} class:Success={status == "Success"}>
+    {responseMessage}
+</p>
+
+<style>
+    .Error {
+        color: red;
+    }
+
+    .Success {
+        color: rgb(0, 187, 0);
+    }
+</style>
