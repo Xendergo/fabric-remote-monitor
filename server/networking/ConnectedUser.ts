@@ -16,6 +16,10 @@ export class ConnectedUser {
 
         this.connectionManager = new WsConnectionManager(this.socket, this)
 
+        this.listen()
+    }
+
+    listen() {
         this.connectionManager.listen(LoginDetails, (data: LoginDetails) => {
             const maybeUser = checkPassword(data.username, data.password)
 
@@ -25,6 +29,11 @@ export class ConnectedUser {
             }
 
             this.user = maybeUser
+
+            if (this.user.admin) {
+                this.listenAdminOnly()
+            }
+
             this.connectionManager.send(new LoginSuccessful(this.user.admin))
         })
 
@@ -39,7 +48,9 @@ export class ConnectedUser {
                 minecraftInterface.send(mirrorMessage)
             }
         )
+    }
 
+    private listenAdminOnly() {
         discordListeners(this.connectionManager)
     }
 

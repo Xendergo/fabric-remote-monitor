@@ -7,6 +7,9 @@ import path from "path"
 import { pki } from "node-forge"
 import { ConnectedUser } from "./networking/ConnectedUser"
 import { MirrorMessage } from "./networking/sendableTypes"
+import { DiscordBot } from "./discord-bot/bot"
+import { getSettings } from "./database/Settings"
+import { createLogger, format, transports } from "winston"
 
 if (!fs.existsSync(location)) {
     fs.mkdirSync(location, {
@@ -14,10 +17,26 @@ if (!fs.existsSync(location)) {
     })
 }
 
+export const logger = createLogger({
+    format: format.combine(
+        format.timestamp({
+            format: "YYYY, MMM Do - H:m:s",
+        }),
+        format.cli(),
+        format.printf(info => {
+            return `${info.timestamp} ${info.level}: ${info.message}`
+        })
+    ),
+    transports: [
+        new transports.File({ filename: path.join(location, "logs.log") }),
+        new transports.Console(),
+    ],
+})
+
 const keyPath = path.join(location, "https.key")
 const certPath = path.join(location, "https.cert")
 if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
-    console.log("Generating self signed SSL certificate...")
+    logger.info("Generating self signed SSL certificate...")
     const keys = pki.rsa.generateKeyPair(2048)
     const cert = pki.createCertificate()
 
@@ -99,15 +118,10 @@ if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
     fs.writeFileSync(keyPath, pki.privateKeyToPem(keys.privateKey))
     fs.writeFileSync(certPath, pki.certificateToPem(cert))
 
-    console.log("Done generating SSL certificate")
+    logger.info("Done generating SSL certificate")
 }
 
 const app = express()
-
-app.use(function (req, res, next) {
-    console.log(req.url)
-    next()
-})
 
 // const httpsServer = https.createServer({
 //     key: fs.readFileSync(keyPath),
@@ -120,7 +134,7 @@ app.use(express.static("./build"))
 
 // fuser -k 8000/tcp
 const server = app.listen(port)
-console.log(`Web server running on port ${port}`)
+logger.info(`Web server running on port ${port}`)
 
 export const minecraftInterface = new MinecraftInterface(8080)
 
@@ -140,3 +154,24 @@ export const connectedUsers: Set<ConnectedUser> = new Set()
 wss.on("connection", connection => {
     connectedUsers.add(new ConnectedUser(connection))
 })
+
+export let discordBot: DiscordBot | null = null
+
+export function destroyDiscordBot() {
+    if (discordBot != null) {
+        discordBot.logout()
+        discordBot = null
+    }
+}
+
+export function createDiscordBot() {
+    const token = getSettings().discordToken
+
+    if (token == null) return
+
+    discordBot = new DiscordBot()
+}
+
+if (getSettings().discordToken != null) {
+    createDiscordBot()
+}

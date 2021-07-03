@@ -5,6 +5,7 @@ import {
     parseNbtInput,
     ListenerManager,
 } from "../networking/sendableTypesHelpers"
+import { logger } from ".."
 
 export class MinecraftInterface extends ListenerManager<NbtSendable, Buffer> {
     constructor(port: number) {
@@ -18,14 +19,14 @@ export class MinecraftInterface extends ListenerManager<NbtSendable, Buffer> {
                 // TODO: Send and error message
             }
 
-            console.log("CONNECTION")
+            logger.info("A minecraft server is now connected to the web server")
 
             this.socket = socket
 
             this.socket.on("data", data => this.onData(data))
         })
 
-        console.log(`Tcp server running on port ${port}`)
+        logger.info(`Tcp server running on port ${port}`)
     }
 
     private currentBytesLeft = 0

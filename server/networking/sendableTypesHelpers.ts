@@ -358,8 +358,6 @@ function everythingGenerator<T extends InputFieldsClassesConstraint<T>>(
             for (const key in values) {
                 this[key as string] = values[key] as AllowedInputFieldTypes
             }
-
-            console.log(this, values)
         }
 
         static channel() {

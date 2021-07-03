@@ -122,7 +122,7 @@ export class MirrorMessage extends NbtSendable {
     }
 }
 
-export function newStyle(style: StyleableWithOptionals): Style {
+export function newStyle(style: PartialStyle): Style {
     return {
         color: style.color ?? [255, 255, 255],
         bold: style.bold ?? false,
@@ -133,15 +133,6 @@ export function newStyle(style: StyleableWithOptionals): Style {
     }
 }
 
-interface StyleableWithOptionals {
-    color?: [number, number, number]
-    bold?: boolean
-    italic?: boolean
-    underlined?: boolean
-    strikethrough?: boolean
-    obfuscated?: boolean
-}
-
 interface Style {
     color: [number, number, number]
     bold: boolean
@@ -150,6 +141,8 @@ interface Style {
     strikethrough: boolean
     obfuscated: boolean
 }
+
+type PartialStyle = Partial<Style>
 
 interface DiscordInput {
     token: string | null
