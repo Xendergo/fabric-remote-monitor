@@ -58,7 +58,9 @@ async function autoFillEULA() {
 }
 
 // @TODO
-async function installRemoteMonitorMod() {}
+async function installRemoteMonitorMod() {
+  
+}
 
 async function runFabricInstaller() {
     spawn("java", [
@@ -69,7 +71,7 @@ async function runFabricInstaller() {
     ])
 }
 
-async function installFabric(dir?: string) {
+export async function installFabric(dir?: string, options?: {}) {
     if (dir && !path.isAbsolute(dir))
         throw Error("Fabric install path is invalid! Must be an absolute path.")
     if (dir && path.isAbsolute(dir)) process.chdir(dir)
