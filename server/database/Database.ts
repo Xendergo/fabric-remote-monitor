@@ -52,9 +52,10 @@ if (settings["COUNT(*)"] == 0) {
 
 db.prepare(
     `
-CREATE TABLE IF NOT EXISTS guildSettings (
+CREATE TABLE IF NOT EXISTS guilds (
     id TEXT PRIMARY KEY,
-    mirror TEXT
+    mirror TEXT,
+    prefix TEXT DEFAULT "mc"
 );
 `
 ).run()

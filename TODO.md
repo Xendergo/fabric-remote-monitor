@@ -1,26 +1,28 @@
 ## Broad stuff
 
--   [] Document all the code `Matthew` + `Xendergo`
+-   [] Document all the code `matgenius04` + `Xendergo`
 
--   [] Minecraft <-> Server communication
-    -   [] Sick NBT converter
--   [] Server Management Stuff `Matthew`
-    -   [] Spawning and managing fabric server instance `Matthew`
-        -   [] Server Restart `Matthew`
-        -   [] Automatically respawn server instance `Matthew`
-    -   [] Mod Install `Matthew`
-        -   [] File Install `Matthew`
-        -   [] Curseforge Support `Matthew`
+-   [x] Minecraft <-> Server communication
+    -   [x] Sick NBT converter
+-   [ ] Sendable Typessss!!!!!!
+    -   [ ] Seperating out into npm package
+-   [] Server Management Stuff `matgenius04`
+    -   [] Spawning and managing fabric server instance `matgenius04`
+        -   [] Server Restart `matgenius04`
+        -   [] Automatically respawn server instance `matgenius04`
+    -   [] Mod Install `matgenius04`
+        -   [] File Install `matgenius04`
+        -   [] Curseforge Support `matgenius04`
 -   [] Proximity Chat
 -   [] Package into a single fabric mod
 -   [] Installer for Fabric and such (maybe? but prolly not)
 
 ## Narrow stuff
 
-- [ ] Write an actual hashing algorithm for the password checking thing `Matthew`
-- [ ] Implement Cookie Authentication `Matthew`
-- [ ] Send an error message if two servers try to connect at the same time
+-   [ ] Write an actual hashing algorithm for the password checking thing `matgenius04`
+-   [ ] Implement Cookie Authentication `matgenius04`
+-   [ ] Send an error message if two servers try to connect at the same time
 
 ## Far future stuff
 
--   [] Refactor sendableTypes.ts if something like this gets implemented: https://github.com/microsoft/TypeScript/issues/4881
+-   [] Refactor sendableTypesHelpers.ts if something like this gets implemented: https://github.com/microsoft/TypeScript/issues/4881

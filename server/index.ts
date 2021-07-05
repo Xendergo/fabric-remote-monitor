@@ -136,7 +136,7 @@ app.use(express.static("./build"))
 const server = app.listen(port)
 logger.info(`Web server running on port ${port}`)
 
-export const minecraftInterface = new MinecraftInterface(8080)
+export const minecraftInterface = new MinecraftInterface(8090)
 
 minecraftInterface.listen<MirrorMessage>(MirrorMessage, data => {
     connectedUsers.forEach(user => {
