@@ -1,10 +1,7 @@
 <script lang="ts">
-    import { discordInput } from "../../../networking/sendableTypes"
-    import type { InputFieldsInterface } from "../../../networking/sendableTypesHelpers"
+    import { discordInputStores } from "../networking"
 
-    import InputFields from "../components/InputFields.svelte"
-
-    const input = discordInput as unknown as InputFieldsInterface
+    const token = discordInputStores.fields.token
 </script>
 
-<InputFields inputFields={input} />
+<input placeholder="Discord bot token" bind:value={$token} />

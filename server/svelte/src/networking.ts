@@ -1,3 +1,5 @@
+import { resetPassword, discordInput } from "../../networking/sendableTypes"
+import { InputFieldsAsStores } from "./inputFieldsToStoresConverter"
 import {
     parseInput,
     Sendable,
@@ -40,22 +42,32 @@ class ClientConnectionManager extends ListenerManager<Sendable, string> {
     ws
 }
 
-const clientConnectionManager = new ClientConnectionManager()
+export const listenerManager = new ClientConnectionManager()
+
+export const resetPasswordStores = new InputFieldsAsStores(
+    resetPassword,
+    listenerManager
+)
+
+export const discordInputStores = new InputFieldsAsStores(
+    discordInput,
+    listenerManager
+)
 
 export function listen<T extends Sendable>(
     channelClass: { channel(): string; new (...data: any[]): T },
     callback: (data: T) => void
 ) {
-    clientConnectionManager.listen(channelClass, callback)
+    listenerManager.listen(channelClass, callback)
 }
 
 export function stopListening<T extends Sendable>(
     channelClass: { channel(): string; new (...data: any[]): T },
-    callback: (data: Sendable) => void
+    callback: (data: T) => void
 ) {
-    clientConnectionManager.stopListening(channelClass, callback)
+    listenerManager.stopListening(channelClass, callback)
 }
 
 export function send<T extends Sendable>(data: T) {
-    clientConnectionManager.send(data)
+    listenerManager.send(data)
 }

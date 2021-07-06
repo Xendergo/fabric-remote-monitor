@@ -1,11 +1,25 @@
 <script lang="ts">
+    import Submit from "../components/InputFields/Submit.svelte"
+    import { listenerManager, resetPasswordStores } from "../networking"
     import { resetPassword } from "../../../networking/sendableTypes"
-    import type { InputFieldsInterface } from "../../../networking/sendableTypesHelpers"
+    import type { ResetPassword } from "../../../networking/sendableTypes"
+    import Response from "../components/InputFields/Response.svelte"
 
-    import InputFields from "../components/InputFields.svelte"
-
-    const resetPasswordConverted =
-        resetPassword as unknown as InputFieldsInterface
+    let data: ResetPassword = {
+        password: "",
+        newPassword: "",
+    }
 </script>
 
-<InputFields inputFields={resetPasswordConverted} />
+<input
+    type="password"
+    placeholder="Original password"
+    bind:value={data.password}
+/><br />
+<input
+    type="password"
+    placeholder="New password"
+    bind:value={data.newPassword}
+/><br />
+<Submit inputFields={resetPasswordStores} {data} text="Reset password" />
+<Response inputFields={resetPassword} {listenerManager} />

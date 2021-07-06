@@ -1,19 +1,30 @@
 {
-  "extends": "@tsconfig/svelte/tsconfig.json",
-  "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "esModuleInterop": false, // maybe change to true when ur feeling adventerous
-    "resolveJsonModule": true,
-    "baseUrl": ".",
-    /**
-     * Typecheck JS in `.svelte` and `.js` files by default.
-     * Disable checkJs if you'd like to use dynamic types in JS.
-     * Note that setting allowJs false does not prevent the use
-     * of JS in `.svelte` files.
-     */
-    "allowJs": true,
-    "checkJs": true
-  },
-  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte"]
+    "extends": "@tsconfig/svelte/tsconfig.json",
+    "compilerOptions": {
+        "target": "esnext",
+        "module": "esnext",
+        "esModuleInterop": false, // maybe change to true when ur feeling adventerous
+        "resolveJsonModule": true,
+        "baseUrl": ".",
+        /**
+         * Typecheck JS in `.svelte` and `.js` files by default.
+         * Disable checkJs if you'd like to use dynamic types in JS.
+         * Note that setting allowJs false does not prevent the use
+         * of JS in `.svelte` files.
+         */
+        "allowJs": true,
+        "checkJs": true,
+        "strict": true,
+        "strictPropertyInitialization": true,
+        "strictNullChecks": true,
+        "strictBindCallApply": true,
+        "strictFunctionTypes": true,
+        "experimentalDecorators": true
+    },
+    "include": [
+        "src/**/*.d.ts",
+        "src/**/*.ts",
+        "src/**/*.js",
+        "src/**/*.svelte"
+    ]
 }

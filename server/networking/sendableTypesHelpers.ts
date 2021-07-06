@@ -65,12 +65,12 @@ export abstract class ListenerManager<
      */
     stopListening<T extends TransferringType>(
         channelClass: { channel(): string; new (...data: any[]): T },
-        callback: (data: TransferringType) => void
+        callback: (data: T) => void
     ) {
         const channel = channelClass.channel()
         if (!this.listeners.has(channel)) return
 
-        this.listeners.get(channel)!.delete(callback)
+        this.listeners.get(channel)!.delete(callback as any)
     }
 
     /**
@@ -191,28 +191,6 @@ type AllowedInputFieldTypesNames = "string" | "bool" | "number"
  */
 type InputFieldOptionsGeneric<T extends AllowedInputFieldTypesNames> = {
     type: T
-
-    /**
-     * Whether the input field should be submitted on a button press or on change
-     * If set, the text is the button text
-     */
-    buttonSubmit?: string
-
-    /**
-     * Whether the text should be hidden like a password input
-     * Only works for string input types
-     */
-    confidential?: boolean
-
-    /**
-     * Whether the label should be displayed as a placeholder within the text box
-     */
-    placeholderLabel?: boolean
-
-    /**
-     * If set, use this text as the label instead of the name of the field in the interface
-     */
-    customLabel?: string
 }
 
 /**
@@ -238,7 +216,7 @@ export type AllowedInputFieldClasses =
  * A [mapped type](www.typescriptlang.org/docs/handbook/2/mapped-types.html) used as a generic type constraint to improve type safety
  * Used to ensure that the interface inputted to {@link InputFields} doesn't use any types that can't be sent via an {@link InputFields} instance
  */
-type InputFieldsClassesConstraint<T> = {
+export type InputFieldsClassesConstraint<T> = {
     +readonly [Property in keyof T]: AllowedInputFieldTypes
 }
 
@@ -422,9 +400,7 @@ export interface ResponseInterface {
  *
  * @typeParam `T` The interface of values that can be sent via the InputFields instance
  */
-export class InputFields<T extends InputFieldsClassesConstraint<T>>
-    implements InputFieldsInterface
-{
+export class InputFields<T extends InputFieldsClassesConstraint<T>> {
     /**
      * @param channel The channel this InputField transfers data on
      * @param fields The data types of the values in type parameter `T`
@@ -515,30 +491,6 @@ export class InputFields<T extends InputFieldsClassesConstraint<T>>
     /**
      * A class that can be passed into `send` implementations that represent either an error or success message
      */
-    Response: {
-        new (status: "Error" | "Success", text: string): Sendable &
-            ResponseInterface
-        channel(): string
-    }
-}
-
-/**
- * An interface implemented by {@link InputFields} to make dealing with the class in code easier by getting rid of the generic types
- */
-export interface InputFieldsInterface {
-    fields: { [key: string]: AllowedInputFieldClasses }
-    fieldOptions: { [key: string]: InputFieldOptions }
-    sendAsEverything: string | null
-    Everything: {
-        new (values: any): Sendable & {
-            [key: string]: AllowedInputFieldTypes
-        }
-        channel(): string
-    }
-    RequestDefault: {
-        new (): Sendable
-        channel(): string
-    }
     Response: {
         new (status: "Error" | "Success", text: string): Sendable &
             ResponseInterface
