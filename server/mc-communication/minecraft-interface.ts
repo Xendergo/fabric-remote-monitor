@@ -1,11 +1,8 @@
 import net from "net"
 import { decode, encode } from "./nbt"
-import {
-    NbtSendable,
-    parseNbtInput,
-    ListenerManager,
-} from "../networking/sendableTypesHelpers"
+import { ListenerManager } from "../../sendableTypes/sendableTypesHelpers"
 import { logger } from ".."
+import { nbtSendable, NbtSendable } from "../networking/sendableTypes"
 
 export class MinecraftInterface extends ListenerManager<NbtSendable, Buffer> {
     constructor(port: number) {
@@ -76,7 +73,7 @@ export class MinecraftInterface extends ListenerManager<NbtSendable, Buffer> {
     decode(data: Buffer) {
         const parsedData = decode(data)
 
-        return parseNbtInput(parsedData)
+        return nbtSendable.get(parsedData.get("channel") as string)!(parsedData)
     }
 
     transmit(data: Buffer) {

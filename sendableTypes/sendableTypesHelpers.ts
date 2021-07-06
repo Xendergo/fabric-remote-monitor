@@ -1,21 +1,9 @@
-import { TagType } from "../mc-communication/nbt"
-
 /**
  * A class representing a class that can be sent via websockets
  * The `channel` field doesn't have to be overriden since the {@link MakeSendable} or {@link MakeNbtSendable} decorator will do that for you
  */
 export abstract class Sendable {
     channel: string | undefined
-}
-
-/**
- * A class representing a class that can be sent via websockets or NBT
- */
-export abstract class NbtSendable extends Sendable {
-    /**
-     * Encode this class as an NBT compound
-     */
-    abstract encode(): Map<string, TagType>
 }
 
 /**
@@ -34,6 +22,13 @@ export abstract class ListenerManager<
      */
     protected onData(data: IOType) {
         const decoded = this.decode(data)
+
+        if (sendableClasses.has(decoded.channel!)) {
+            Object.setPrototypeOf(
+                decoded,
+                sendableClasses.get(decoded.channel!)!.prototype
+            )
+        }
 
         this.listeners
             .get(decoded.channel!)
@@ -104,49 +99,9 @@ export abstract class ListenerManager<
 }
 
 /**
- * All the classes that can be sent via NBT, used to find the decoder of a particular channel
- */
-const nbtSendable: Map<string, (data: Map<string, TagType>) => NbtSendable> =
-    new Map()
-
-/**
  * All the classes that can be sent at all, used to change the prototype of decoded objects
  */
 const sendableClasses: Map<string, { prototype: object }> = new Map()
-
-/**
- * Parse input encoded as JSON into a class
- * @param data JSON encoded object
- * @returns An object, if the channel is in sendableClasses, it'll also change the prototype so you can use the class's methods on it
- */
-export function parseInput(data: string) {
-    const parsedData: Sendable = JSON.parse(data)
-
-    if (sendableClasses.has(parsedData.channel!)) {
-        Object.setPrototypeOf(
-            parsedData,
-            sendableClasses.get(parsedData.channel!)!.prototype
-        )
-    }
-
-    return parsedData
-}
-
-/**
- *
- * @param data An NBT compound
- * @returns An object with the prototype changed to the one degsignated by the channel
- */
-export function parseNbtInput(data: Map<string, TagType>) {
-    const parsedData = nbtSendable.get(data.get("channel") as string)!(data)
-
-    Object.setPrototypeOf(
-        parsedData,
-        sendableClasses.get(parsedData.channel!)!.prototype
-    )
-
-    return parsedData
-}
 
 /**
  * A decorator to make a class sendable via websockets
@@ -158,25 +113,6 @@ export function MakeSendable(channel: string) {
         channel(): string
     }) => {
         sendableClasses.set(channel, constructor)
-        constructor.prototype.channel = channel
-    }
-}
-
-/**
- * A decorator to make a class sendable via NBT or websockets
- * @param channel The channel this class should be send through
- * @param decode A function to decode an NBT compound to the class
- */
-export function MakeNbtSendable<T extends NbtSendable>(
-    channel: string,
-    decode: (data: Map<string, TagType>) => T
-) {
-    return (constructor: {
-        new (...args: any[]): NbtSendable
-        channel(): string
-    }) => {
-        sendableClasses.set(channel, constructor)
-        nbtSendable.set(channel, decode)
         constructor.prototype.channel = channel
     }
 }

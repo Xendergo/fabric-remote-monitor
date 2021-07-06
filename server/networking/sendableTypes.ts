@@ -1,11 +1,54 @@
 import { int, TagType } from "../mc-communication/nbt"
 import {
     InputFields,
-    MakeNbtSendable,
     MakeSendable,
-    NbtSendable,
     Sendable,
-} from "./sendableTypesHelpers"
+} from "../../sendableTypes/sendableTypesHelpers"
+
+/**
+ * A class representing a class that can be sent via websockets or NBT
+ */
+export abstract class NbtSendable extends Sendable {
+    /**
+     * Encode this class as an NBT compound
+     */
+    abstract encode(): Map<string, TagType>
+}
+
+/**
+ * All the classes that can be sent via NBT, used to find the decoder of a particular channel
+ */
+export const nbtSendable: Map<
+    string,
+    (data: Map<string, TagType>) => NbtSendable
+> = new Map()
+
+/**
+ *
+ * @param data An NBT compound
+ * @returns An object with the prototype changed to the one degsignated by the channel
+ */
+export function parseNbtInput(data: Map<string, TagType>) {
+    return nbtSendable.get(data.get("channel") as string)!(data)
+}
+
+/**
+ * A decorator to make a class sendable via NBT or websockets
+ * @param channel The channel this class should be send through
+ * @param decode A function to decode an NBT compound to the class
+ */
+export function MakeNbtSendable<T extends NbtSendable>(
+    channel: string,
+    decode: (data: Map<string, TagType>) => T
+) {
+    return (constructor: {
+        new (...args: any[]): NbtSendable
+        channel(): string
+    }) => {
+        MakeSendable(channel)(constructor)
+        nbtSendable.set(channel, decode)
+    }
+}
 
 @MakeSendable("LoginDetails")
 export class LoginDetails extends Sendable {

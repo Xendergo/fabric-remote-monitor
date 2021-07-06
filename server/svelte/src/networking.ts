@@ -1,10 +1,9 @@
 import { resetPassword, discordInput } from "../../networking/sendableTypes"
 import { InputFieldsAsStores } from "./inputFieldsToStoresConverter"
 import {
-    parseInput,
     Sendable,
     ListenerManager,
-} from "../../networking/sendableTypesHelpers"
+} from "../../../sendableTypes/sendableTypesHelpers"
 
 export let isAdmin = false
 
@@ -32,7 +31,7 @@ class ClientConnectionManager extends ListenerManager<Sendable, string> {
     }
 
     decode(data: string) {
-        return parseInput(data)
+        return JSON.parse(data)
     }
 
     transmit(data: string) {

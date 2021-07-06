@@ -1,6 +1,9 @@
 import ws from "ws"
 import { connectedUsers } from ".."
-import { ListenerManager, parseInput, Sendable } from "./sendableTypesHelpers"
+import {
+    ListenerManager,
+    Sendable,
+} from "../../sendableTypes/sendableTypesHelpers"
 import { ConnectedUser } from "./ConnectedUser"
 
 export class WsConnectionManager extends ListenerManager<Sendable, string> {
@@ -27,7 +30,7 @@ export class WsConnectionManager extends ListenerManager<Sendable, string> {
     }
 
     protected decode(data: string) {
-        return parseInput(data)
+        return JSON.parse(data)
     }
 
     protected transmit(data: string) {

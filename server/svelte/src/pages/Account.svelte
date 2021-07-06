@@ -2,7 +2,6 @@
     import Submit from "../components/InputFields/Submit.svelte"
     import { listenerManager, resetPasswordStores } from "../networking"
     import { resetPassword } from "../../../networking/sendableTypes"
-    import type { ResetPassword } from "../../../networking/sendableTypes"
     import Response from "../components/InputFields/Response.svelte"
 </script>
 
