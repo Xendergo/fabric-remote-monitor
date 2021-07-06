@@ -74,13 +74,17 @@ export class InputFieldsAsStores<T extends InputFieldsClassesConstraint<T>> {
                 return a
             }, {} as AsWritable<T>)
 
-        this.everything = new NetworkingWritable(
-            (Object.keys(fields.fields) as (keyof T)[]).reduce((a, v) => {
-                ;(a[v] as AllowedInputFieldTypes) =
-                    fields.fields[v].type() == "bool" ? false : null
+        this.localEverything = (
+            Object.keys(fields.fields) as (keyof T)[]
+        ).reduce((a, v) => {
+            ;(a[v] as AllowedInputFieldTypes) =
+                fields.fields[v].type() == "bool" ? false : null
 
-                return a
-            }, {} as T)
+            return a
+        }, {} as T)
+
+        this.everything = new NetworkingWritable(
+            Object.assign({}, this.localEverything)
         )
 
         for (const key in this.fields) {
@@ -115,4 +119,6 @@ export class InputFieldsAsStores<T extends InputFieldsClassesConstraint<T>> {
     fields: AsWritable<T>
 
     everything: NetworkingWritable<T>
+
+    localEverything: T
 }

@@ -4,22 +4,21 @@
     import { resetPassword } from "../../../networking/sendableTypes"
     import type { ResetPassword } from "../../../networking/sendableTypes"
     import Response from "../components/InputFields/Response.svelte"
-
-    let data: ResetPassword = {
-        password: "",
-        newPassword: "",
-    }
 </script>
 
 <input
     type="password"
     placeholder="Original password"
-    bind:value={data.password}
+    bind:value={resetPasswordStores.localEverything.password}
 /><br />
 <input
     type="password"
     placeholder="New password"
-    bind:value={data.newPassword}
+    bind:value={resetPasswordStores.localEverything.newPassword}
 /><br />
-<Submit inputFields={resetPasswordStores} {data} text="Reset password" />
+<Submit
+    inputFields={resetPasswordStores}
+    data={resetPasswordStores.localEverything}
+    text="Reset password"
+/>
 <Response inputFields={resetPassword} {listenerManager} />
