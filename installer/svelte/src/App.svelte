@@ -1,7 +1,4 @@
 <script lang="ts">
-    import Form from "./lib/Form.svelte"
-    import Question from "./lib/Question.svelte"
-
     const keysdown = new Set()
     window.addEventListener("keypress", ev => {
         keysdown.add(ev.key)

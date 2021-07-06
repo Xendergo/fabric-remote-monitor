@@ -13,6 +13,7 @@ export function discordListeners(user: WsConnectionManager) {
     })
 
     user.listen(discordInput.RequestDefault, data => {
+        console.log("UYEYEYEYEY")
         user.send(
             new discordInput.Everything({
                 token: getSettings().discordToken,

@@ -53,14 +53,15 @@ async function getLatestFabricInstaller(): Promise<void> {
     })
 }
 
+// creates a new eula file with the eula set to true
 async function autoFillEULA() {
     writeFile("eula.txt", "eula=true")
 }
 
 // @TODO
-async function installRemoteMonitorMod() {
-  
-}
+// will take the compiled jar minecraft-mod
+// and move it into the mods folder
+async function installRemoteMonitorMod() {}
 
 async function runFabricInstaller() {
     spawn("java", [

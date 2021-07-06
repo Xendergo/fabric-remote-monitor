@@ -20,14 +20,14 @@ class ClientConnectionManager extends ListenerManager<Sendable, string> {
         this.ws.onmessage = e => {
             this.onData(e.data as string)
         }
+
+        this.ws.onopen = e => {
+            this.ready()
+        }
     }
 
     encode(dataObj: Sendable) {
-        let data = dataObj as { [key: string]: any }
-
-        data.channel = Object.getPrototypeOf(dataObj).channel
-
-        return JSON.stringify(data)
+        return JSON.stringify(dataObj)
     }
 
     decode(data: string) {

@@ -21,6 +21,8 @@ export class MinecraftInterface extends ListenerManager<NbtSendable, Buffer> {
             this.socket = socket
 
             this.socket.on("data", data => this.onData(data))
+
+            this.ready()
         })
 
         logger.info(`Tcp server running on port ${port}`)
@@ -63,11 +65,7 @@ export class MinecraftInterface extends ListenerManager<NbtSendable, Buffer> {
     }
 
     encode(data: NbtSendable) {
-        const converted = data.encode()
-
-        converted.set("channel", data.channel!)
-
-        return encode(converted)
+        return encode(data.encode())
     }
 
     decode(data: Buffer) {

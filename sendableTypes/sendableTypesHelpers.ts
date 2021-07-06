@@ -9,6 +9,14 @@ export abstract class Sendable {
 /**
  * A class to provide the common implementation details for classes managing communication using this API
  *
+ * HOW TO IMPLEMENT:
+ * You must call `this.onData` whenever the implementor received data from the other end of the connection
+ *
+ * You must call `this.ready` when the connection becomes open and you're ready to transmit data
+ *
+ * `encode` & `decode` only need to faithfully encode and decode the data given to it, everything else is handled by the ListenerManager class.
+ * For example, if the `IOType` is json encoded text, just using `JSON.parse` & `JSON.stringify` would work just fine
+ *
  * @typeParam `TransferringType` The data type that users of the implementing manager would receive and send
  * @typeParam `IOType` The data type that this manager converts `TransferringType` to and from, and is what's sent over the network
  */
@@ -23,12 +31,12 @@ export abstract class ListenerManager<
     protected onData(data: IOType) {
         const decoded = this.decode(data)
 
-        if (sendableClasses.has(decoded.channel!)) {
-            Object.setPrototypeOf(
-                decoded,
-                sendableClasses.get(decoded.channel!)!.prototype
-            )
-        }
+        if (!sendableClasses.has(decoded.channel!)) return
+
+        Object.setPrototypeOf(
+            decoded,
+            sendableClasses.get(decoded.channel!)!.prototype
+        )
 
         this.listeners
             .get(decoded.channel!)
@@ -36,7 +44,7 @@ export abstract class ListenerManager<
     }
 
     /**
-     * Listen for data send by the other side of this connection
+     * Listen for data sent by the other side of this connection, the data's prototype is also changed automatically so you get an actual instance of the class back
      * @param channelClass The class you're expecting to receive
      * @param callback Called when the listener manager received data on this channel
      */
@@ -73,7 +81,36 @@ export abstract class ListenerManager<
      * @param data The data to send
      */
     send<T extends TransferringType>(data: T) {
+        if (!this.isReady) {
+            this.queue.push(data)
+            return
+        }
+
+        data.channel = Object.getPrototypeOf(data).channel
+
+        if (!sendableClasses.has(data.channel!)) {
+            throw new Error(
+                "The class being sent isn't registered in the list of sendable classes, did you remember to use @MakeSendable on it?"
+            )
+        }
+
         this.transmit(this.encode(data))
+    }
+
+    private queue: Array<TransferringType> = []
+    private isReady = false
+
+    /**
+     * Implementors must call this when the listener manager is ready to transmit data
+     *
+     * Before this is called, messages send by `send` are queued so they won't cause errors
+     */
+    protected ready() {
+        this.isReady = true
+
+        this.queue.forEach(v => this.send(v))
+
+        this.queue = []
     }
 
     /**
@@ -292,7 +329,7 @@ function generateClass(
         }
     }
 
-    ret.prototype.channel = `${channel}.${key}`
+    MakeSendable(`${channel}.${key}`)(ret)
 
     return ret
 }
@@ -300,6 +337,7 @@ function generateClass(
 function everythingGenerator<T extends InputFieldsClassesConstraint<T>>(
     channel: string
 ) {
+    @MakeSendable(channel)
     class NewClass extends Sendable {
         [key: string]: AllowedInputFieldTypes | undefined
 
@@ -316,8 +354,6 @@ function everythingGenerator<T extends InputFieldsClassesConstraint<T>>(
         }
     }
 
-    NewClass.prototype.channel = channel
-
     return NewClass as unknown as {
         new (values: T): Sendable & T
         channel(): string
@@ -333,6 +369,8 @@ export interface ResponseInterface {
  * A class representing a list of values, meant to make sending lots of unique values, specifically config menus on the client side, more convienient.
  *
  * It does this by taking an interface, and converting the interface's keys to a series of classes meant to be instantiated & sent via regular `send` implementations in a convenient & type safe way
+ *
+ * Meant to be instantiated in the global scope and reused, doing otherwise would cause a memory leak
  *
  * @typeParam `T` The interface of values that can be sent via the InputFields instance
  */

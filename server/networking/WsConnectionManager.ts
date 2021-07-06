@@ -9,6 +9,7 @@ import { ConnectedUser } from "./ConnectedUser"
 export class WsConnectionManager extends ListenerManager<Sendable, string> {
     constructor(socket: ws, user: ConnectedUser) {
         super()
+        this.ready()
 
         this.socket = socket
 
@@ -22,11 +23,7 @@ export class WsConnectionManager extends ListenerManager<Sendable, string> {
     }
 
     protected encode(dataObj: Sendable) {
-        let data = dataObj as { [key: string]: any }
-
-        data.channel = Object.getPrototypeOf(dataObj).channel
-
-        return JSON.stringify(data)
+        return JSON.stringify(dataObj)
     }
 
     protected decode(data: string) {

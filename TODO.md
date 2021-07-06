@@ -1,21 +1,22 @@
 ## Broad stuff
 
--   [] Document all the code `matgenius04` + `Xendergo`
+-   [ ] Document all the code `matgenius04` + `Xendergo`
 
 -   [x] Minecraft <-> Server communication
     -   [x] Sick NBT converter
 -   [ ] Sendable Typessss!!!!!!
     -   [ ] Seperating out into npm package
--   [] Server Management Stuff `matgenius04`
-    -   [] Spawning and managing fabric server instance `matgenius04`
-        -   [] Server Restart `matgenius04`
-        -   [] Automatically respawn server instance `matgenius04`
-    -   [] Mod Install `matgenius04`
-        -   [] File Install `matgenius04`
-        -   [] Curseforge Support `matgenius04`
--   [] Proximity Chat
--   [] Package into a single fabric mod
--   [] Installer for Fabric and such (maybe? but prolly not)
+-   [ ] Server Management Stuff `matgenius04`
+    -   [ ] Spawning and managing fabric server instance `matgenius04`
+        -   [ ] Server Restart `matgenius04`
+        -   [ ] Automatically respawn server instance `matgenius04`
+    -   [ ] Mod Install `matgenius04`
+        -   [ ] File Install `matgenius04`
+        -   [ ] Curseforge Support `matgenius04`
+-   [ ] Proximity Chat
+-   [ ] Package into a single fabric mod
+-   [ ] Installer for Fabric and such
+-   [ ] Write API to allow for making minecraft mods that add custom pages to the
 
 ## Narrow stuff
 
@@ -25,4 +26,5 @@
 
 ## Far future stuff
 
--   [] Refactor sendableTypesHelpers.ts if something like this gets implemented: https://github.com/microsoft/TypeScript/issues/4881
+-   [ ] Refactor sendableTypesHelpers.ts if something like this gets implemented: https://github.com/microsoft/TypeScript/issues/4881
+-   [ ] Scarpet editor?
