@@ -10,6 +10,7 @@ import { MirrorMessage } from "./networking/sendableTypes"
 import { DiscordBot } from "./discord-bot/bot"
 import { getSettings } from "./database/Settings"
 import { createLogger, format, transports } from "winston"
+import { broadcast } from "./networking/WsConnectionManager"
 
 if (!fs.existsSync(location)) {
     fs.mkdirSync(location, {
@@ -139,9 +140,9 @@ logger.info(`Web server running on port ${port}`)
 export const minecraftInterface = new MinecraftInterface(8090)
 
 minecraftInterface.listen<MirrorMessage>(MirrorMessage, data => {
-    connectedUsers.forEach(user => {
-        user.connectionManager.send(data)
-    })
+    broadcast(data)
+
+    discordBot?.onMirrorMessage(data)
 })
 
 const wss = new ws.Server({

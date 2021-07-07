@@ -1,10 +1,12 @@
 import { Client } from "discord.js"
-import { logger } from "../index"
+import { logger, minecraftInterface } from "../index"
 import { getSettings } from "../database/Settings"
 import { onDirectMessage } from "./connectAccount"
 import { DBGuild } from "../database/Discord"
 import { commands } from "./commandHelpers"
-import { PrefixCommand } from "./commands"
+import { PrefixCommand, MirrorCommand } from "./commands"
+import { MirrorMessage, newStyle } from "../networking/sendableTypes"
+import { broadcast } from "../networking/WsConnectionManager"
 console.log(PrefixCommand)
 
 export class DiscordBot {
@@ -22,6 +24,18 @@ export class DiscordBot {
             }
 
             const guild = new DBGuild(msg.guild.id)
+
+            if (guild.mirror == msg.channel.id) {
+                const message = new MirrorMessage(
+                    `<${msg.member?.displayName}> ${msg.content}`,
+                    newStyle({})
+                )
+
+                broadcast(message)
+
+                minecraftInterface.send(message)
+            }
+
             const split = msg.content.split(" ")
 
             if (split.length < 2 || split[0] != guild.prefix) return
@@ -32,6 +46,17 @@ export class DiscordBot {
             }
 
             commands.get(split[1])!.run(msg, split.slice(2))
+        })
+    }
+
+    onMirrorMessage(msg: MirrorMessage) {
+        this.client.guilds.cache.forEach(guild => {
+            const dbGuild = new DBGuild(guild.id)
+
+            const channel = guild.channels.cache.get(dbGuild.mirror)
+            if (channel?.isText()) {
+                channel.send(msg.message)
+            }
         })
     }
 

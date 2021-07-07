@@ -46,11 +46,11 @@ export async function getLatestJavaInstaller(): Promise<void> {
     const writeStream = fs.createWriteStream(path.resolve("./java"))
     const unzip = createGunzip()
 
-    // downloadStream.pipe(writeStream)
+    downloadStream.pipe(writeStream)
 
-    downloadStream.pipe(unzip)
+    // downloadStream.pipe(unzip)
 
-    unzip.pipe(writeStream)
+    // unzip.pipe(writeStream)
 
     writeStream.once("close", () => {
         console.log("Java downloaded?")

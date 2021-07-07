@@ -5,6 +5,9 @@ const addGuild = db.prepare("INSERT INTO guilds (id) VALUES ($id)")
 const setPrefix = db.prepare(
     "UPDATE guilds SET prefix = $prefix WHERE id = $id"
 )
+const setMirror = db.prepare(
+    "UPDATE guilds SET mirror = $mirror WHERE id = $id"
+)
 
 export class DBGuild {
     constructor(id: string) {
@@ -35,6 +38,15 @@ export class DBGuild {
         })
 
         this.prefix = newPrefix
+    }
+
+    setMirror(newMirror: string) {
+        setMirror.run({
+            mirror: newMirror,
+            id: this.id,
+        })
+
+        this.mirror = newMirror
     }
 
     id: string

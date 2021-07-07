@@ -52,7 +52,8 @@ type ArgumentTypes<T extends AllowedArgumentTypes[]> = {
 
 export function MakeCommand<T extends AllowedArgumentTypes[]>(
     command: string,
-    args: ArgumentTypes<T>
+    args: ArgumentTypes<T>,
+    adminOnly: boolean = false
 ) {
     return (target: { new (): DiscordCommandInterface<T> }) => {
         target.prototype.command = command

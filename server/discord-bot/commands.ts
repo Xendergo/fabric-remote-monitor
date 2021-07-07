@@ -15,3 +15,13 @@ export class PrefixCommand {
         guild.setPrefix(args[0])
     }
 }
+
+@MakeCommand<[]>("setMirror", [], true)
+export class MirrorCommand {
+    exec(msg: Message, args: []) {
+        const guild = new DBGuild(msg.guild!.id)
+
+        guild.setMirror(msg.channel.id)
+        console.log("bruh")
+    }
+}

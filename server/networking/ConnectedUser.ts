@@ -10,6 +10,7 @@ import {
 import { minecraftInterface } from ".."
 import { discordListeners } from "./ConfigMenus/Discord"
 import { accountListeners } from "./ConfigMenus/Account"
+import { discordBot } from "../index"
 
 export class ConnectedUser {
     constructor(socket: ws) {
@@ -49,6 +50,8 @@ export class ConnectedUser {
                 broadcast<MirrorMessage>(mirrorMessage)
 
                 minecraftInterface.send(mirrorMessage)
+
+                discordBot?.onMirrorMessage(mirrorMessage)
             }
         )
     }

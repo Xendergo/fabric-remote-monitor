@@ -50,7 +50,6 @@ public class SocketReaderThread extends Thread {
     }
 
     private void onByte(byte newByte) {
-        FabricRemoteMonitor.log(Level.INFO, newByte + " " + currentBytesLeft);
         if (currentBytesLeft == 0) {
             if (currentLengthIndex != 4) {
                 lengthBuffer[currentLengthIndex] = newByte;
@@ -83,6 +82,8 @@ public class SocketReaderThread extends Thread {
         buffer.setBytes(0, packet);
         buffer.setIndex(0, packet.length);
         var compound = buffer.readNbt();
+
+        FabricRemoteMonitor.log(Level.INFO, compound.asString());
 
         serverInterface.OnPacket(compound);
     }

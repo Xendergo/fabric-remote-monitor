@@ -20,7 +20,7 @@ export class MinecraftInterface extends ListenerManager<NbtSendable, Buffer> {
 
             this.socket = socket
 
-            this.socket.on("data", data => this.onData(data))
+            this.socket.on("data", data => this.onDataFromSocket(data))
 
             this.ready()
         })
@@ -34,7 +34,7 @@ export class MinecraftInterface extends ListenerManager<NbtSendable, Buffer> {
     private currentLengthIndex = 0
     private lengthBuffer = Buffer.alloc(4)
 
-    onData(data: Buffer) {
+    onDataFromSocket(data: Buffer) {
         for (const byte of data) {
             this.onByte(byte)
         }
@@ -65,7 +65,11 @@ export class MinecraftInterface extends ListenerManager<NbtSendable, Buffer> {
     }
 
     encode(data: NbtSendable) {
-        return encode(data.encode())
+        const encoded = data.encode()
+
+        encoded.set("channel", data.channel!)
+
+        return encode(encoded)
     }
 
     decode(data: Buffer) {

@@ -40,7 +40,7 @@ public class ServerInterface {
             thisThread = new SocketReaderThread(socket, this);
             thisThread.start();
         } catch (IOException e) {
-            FabricRemoteMonitor.log(Level.ERROR, "Failed to connect to connect to the config server, printing stack trace: ");
+            FabricRemoteMonitor.log(Level.ERROR, "Failed to connect to connect to the web server, printing stack trace: ");
 
             e.printStackTrace();
         }
@@ -71,9 +71,7 @@ public class ServerInterface {
     }
 
     public void Listen(String channel, Consumer<NbtCompound> callback) {
-        if (!listeners.containsKey(channel)) {
-            listeners.put(channel, new HashSet<>());
-        }
+        listeners.computeIfAbsent(channel, key -> new HashSet<>());
 
         listeners.get(channel).add(callback);
     }

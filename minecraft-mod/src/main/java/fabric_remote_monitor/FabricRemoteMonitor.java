@@ -33,6 +33,7 @@ public class FabricRemoteMonitor implements ModInitializer {
             ServerInterface serverInterface = serverAdditions.getServerInterface();
 
             serverInterface.Listen("MirrorMessage", (compound) -> {
+                log(Level.INFO, compound.asString());
                 String text = compound.getString("message");
                 Messages.BroadcastText(server, Text.of(text));
             });
