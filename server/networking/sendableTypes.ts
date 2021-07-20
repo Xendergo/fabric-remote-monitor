@@ -3,6 +3,8 @@ import {
     InputFields,
     MakeSendable,
     Sendable,
+    strats,
+    TypeCheckingStrategies,
 } from "../../sendableTypes/sendableTypesHelpers"
 
 /**
@@ -39,18 +41,23 @@ export function parseNbtInput(data: Map<string, TagType>) {
  */
 export function MakeNbtSendable<T extends NbtSendable>(
     channel: string,
+    theseStrats: Omit<TypeCheckingStrategies<T>, "encode">,
     decode: (data: Map<string, TagType>) => T
 ) {
-    return (constructor: {
-        new (...args: any[]): NbtSendable
-        channel(): string
-    }) => {
-        MakeSendable(channel)(constructor)
+    return (constructor: { new (...args: any[]): T; channel(): string }) => {
+        const theseConvertedStrats = theseStrats as TypeCheckingStrategies<T>
+
+        theseConvertedStrats.encode = strats.isPrototype()
+
+        MakeSendable<T>(channel, theseConvertedStrats)(constructor)
         nbtSendable.set(channel, decode)
     }
 }
 
-@MakeSendable("LoginDetails")
+@MakeSendable<LoginDetails>("LoginDetails", {
+    username: strats.string,
+    password: strats.string,
+})
 export class LoginDetails extends Sendable {
     constructor(username: string, password: string) {
         super()
@@ -58,29 +65,28 @@ export class LoginDetails extends Sendable {
         this.password = password
     }
 
-    static channel() {
-        return this.prototype.channel as string
-    }
-
     username: string
     password: string
 }
 
-@MakeNbtSendable("SignupDetails", data => {
-    return new SignupDetails(
-        data.get("username")! as string,
-        data.get("password")! as string
-    )
-})
+@MakeNbtSendable<SignupDetails>(
+    "SignupDetails",
+    {
+        username: strats.string,
+        password: strats.string,
+    },
+    data => {
+        return new SignupDetails(
+            data.get("username")! as string,
+            data.get("password")! as string
+        )
+    }
+)
 export class SignupDetails extends NbtSendable {
     constructor(username: string, password: string) {
         super()
         this.username = username
         this.password = password
-    }
-
-    static channel() {
-        return this.prototype.channel as string
     }
 
     username: string
@@ -91,14 +97,12 @@ export class SignupDetails extends NbtSendable {
     }
 }
 
-@MakeSendable("LoginFailed")
-export class LoginFailed extends Sendable {
-    static channel() {
-        return this.prototype.channel as string
-    }
-}
+@MakeSendable("LoginFailed", {})
+export class LoginFailed extends Sendable {}
 
-@MakeSendable("LoginSuccessful")
+@MakeSendable<LoginSuccessful>("LoginSuccessful", {
+    isAdmin: strats.boolean,
+})
 export class LoginSuccessful extends Sendable {
     constructor(isAdmin: boolean) {
         super()
@@ -106,37 +110,38 @@ export class LoginSuccessful extends Sendable {
     }
 
     isAdmin: boolean
-
-    static channel() {
-        return this.prototype.channel as string
-    }
 }
 
-@MakeNbtSendable("MirrorMessage", data => {
-    const style = (data.get("style")! as int).value
+@MakeNbtSendable(
+    "MirrorMessage",
+    {
+        message: strats.string,
+        style: function (data: any): data is Style {
+            return true
+        },
+    },
+    data => {
+        const style = (data.get("style")! as int).value
 
-    return new MirrorMessage(data.get("message")! as string, {
-        color: [
-            (Number(style) & 0xff000000) >>> 24,
-            (Number(style) & 0x00ff0000) >>> 16,
-            (Number(style) & 0x0000ff00) >>> 8,
-        ],
-        bold: (style & 1n) != 0n,
-        italic: (style & 2n) != 0n,
-        underlined: (style & 4n) != 0n,
-        strikethrough: (style & 8n) != 0n,
-        obfuscated: (style & 16n) != 0n,
-    })
-})
+        return new MirrorMessage(data.get("message")! as string, {
+            color: [
+                (Number(style) & 0xff000000) >>> 24,
+                (Number(style) & 0x00ff0000) >>> 16,
+                (Number(style) & 0x0000ff00) >>> 8,
+            ],
+            bold: (style & 1n) != 0n,
+            italic: (style & 2n) != 0n,
+            underlined: (style & 4n) != 0n,
+            strikethrough: (style & 8n) != 0n,
+            obfuscated: (style & 16n) != 0n,
+        })
+    }
+)
 export class MirrorMessage extends NbtSendable {
     constructor(message: string, style: Style) {
         super()
         this.message = message
         this.style = style
-    }
-
-    static channel() {
-        return this.prototype.channel as string
     }
 
     message
@@ -187,16 +192,15 @@ interface Style {
 
 type PartialStyle = Partial<Style>
 
-@MakeSendable("Popup")
+@MakeSendable<Popup>("Popup", {
+    title: strats.string,
+    text: strats.string,
+})
 export class Popup extends Sendable {
     constructor(title: string, text: string) {
         super()
         this.title = title
         this.text = text
-    }
-
-    static channel() {
-        return this.prototype.channel as string
     }
 
     title

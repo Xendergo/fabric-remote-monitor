@@ -14,15 +14,15 @@
     let status = "Error"
     let text = ""
 
-    function onResponse(data: ResponseInterface) {
+    function onStatus(data: ResponseInterface) {
         status = data.status
         text = data.text
     }
 
-    listenerManager.listen(inputFields.Response, onResponse)
+    listenerManager.listen(inputFields.Status, onStatus)
 
     onDestroy(() => {
-        listenerManager.stopListening(inputFields.Response, onResponse)
+        listenerManager.stopListening(inputFields.Status, onStatus)
     })
 </script>
 

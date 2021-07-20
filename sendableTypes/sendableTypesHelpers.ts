@@ -4,6 +4,10 @@
  */
 export abstract class Sendable {
     channel: string | undefined
+
+    static channel() {
+        return this.prototype.channel as string
+    }
 }
 
 /**
@@ -29,14 +33,46 @@ export abstract class ListenerManager<
      * @param data The data received
      */
     protected onData(data: IOType) {
-        const decoded = this.decode(data)
+        let decoded: TransferringType
 
-        if (!sendableClasses.has(decoded.channel!)) return
+        try {
+            decoded = this.decode(data)
+        } catch (e) {
+            console.warn(
+                `Dropped message because decoder threw an error: \n ${e} \n\n ${data}`
+            )
+            return
+        }
 
-        Object.setPrototypeOf(
-            decoded,
-            sendableClasses.get(decoded.channel!)!.prototype
-        )
+        if (!decoded.channel) {
+            console.warn(
+                `Dropped message for not having a channel: \n ${decoded} \n\n ${data}`
+            )
+
+            return
+        }
+
+        if (!sendableClasses.has(decoded.channel)) {
+            console.warn(
+                `Dropped message because it's channel (${decoded.channel}) isn't included in the registry (did you remember to use @MakeSendable on it?): \n ${decoded} \n\n ${data}`
+            )
+
+            return
+        }
+
+        const [prototype, strategies] = sendableClasses.get(decoded.channel)!
+
+        for (const key in strategies) {
+            if (!strategies[key]((decoded as { [key: string]: any })[key])) {
+                console.warn(
+                    `Dropped message because it failed the type check for key \`${key}\`: \n ${decoded} \n\n ${data}`
+                )
+
+                return
+            }
+        }
+
+        Object.setPrototypeOf(decoded, prototype)
 
         this.listeners
             .get(decoded.channel!)
@@ -81,18 +117,18 @@ export abstract class ListenerManager<
      * @param data The data to send
      */
     send<T extends TransferringType>(data: T) {
+        if (!sendableClasses.has(data.channel!)) {
+            throw new Error(
+                "The class being sent isn't registered in the list of sendable classes, did you remember to use @MakeSendable on it?"
+            )
+        }
+
         if (!this.isReady) {
             this.queue.push(data)
             return
         }
 
         data.channel = Object.getPrototypeOf(data).channel
-
-        if (!sendableClasses.has(data.channel!)) {
-            throw new Error(
-                "The class being sent isn't registered in the list of sendable classes, did you remember to use @MakeSendable on it?"
-            )
-        }
 
         this.transmit(this.encode(data))
     }
@@ -135,21 +171,166 @@ export abstract class ListenerManager<
         new Map()
 }
 
+type EachType<T extends object> = {
+    +readonly [Property in keyof T]-?: (data: any) => data is T[Property]
+}
+
+/**
+ * A set of common strategies that you can input into {@link MakeSendable} so you don't have to constantly retype the same long functions
+ */
+class Strategies {
+    all<T>(...strats: ((data: any) => boolean)[]) {
+        return function (data: any): data is T {
+            for (const strat of strats) {
+                if (!strat(data)) {
+                    return false
+                }
+            }
+
+            return true
+        }
+    }
+
+    any<T>(...strats: ((data: any) => boolean)[]) {
+        return function (data: any): data is T {
+            for (const strat of strats) {
+                if (strat(data)) {
+                    return true
+                }
+            }
+
+            return false
+        }
+    }
+
+    each<T extends { [key: string]: any }>(strats: EachType<T>) {
+        return function (data: any): data is T {
+            for (const key in strats) {
+                let value
+
+                try {
+                    value = data[key]
+                } catch {
+                    return false
+                }
+
+                if (!strats[key](value)) {
+                    return false
+                }
+            }
+
+            return true
+        }
+    }
+
+    tupleEach<T extends Array<any>>(strats: EachType<T>) {
+        return function (data: any): data is T {
+            if (!Array.isArray(data) || data.length !== strats.length) {
+                return false
+            }
+
+            for (let i = 0; i < data.length; i++) {
+                if (!strats[i](data[i])) {
+                    return false
+                }
+            }
+
+            return true
+        }
+    }
+
+    Array<T>(strat: (data: any) => data is T) {
+        return function (data: any): data is Array<T> {
+            if (!Array.isArray(data)) {
+                return false
+            }
+
+            for (const v in data) {
+                if (!strat(v)) {
+                    return false
+                }
+            }
+
+            return true
+        }
+    }
+
+    value<T>(value: T) {
+        return function (data: any): data is T {
+            return data === value
+        }
+    }
+
+    isPrototype<T>() {
+        return function (data: any): data is T {
+            return data === undefined
+        }
+    }
+
+    number(data: any): data is number {
+        return typeof data === "number"
+    }
+
+    string(data: any): data is string {
+        return typeof data === "string"
+    }
+
+    boolean(data: any): data is boolean {
+        return typeof data === "boolean"
+    }
+
+    bigint(data: any): data is bigint {
+        return typeof data === "bigint"
+    }
+
+    symbol(data: any): data is symbol {
+        return typeof data === "symbol"
+    }
+
+    function(data: any): data is Function {
+        return typeof data === "function"
+    }
+
+    object(data: any): data is object {
+        return typeof data === "object"
+    }
+
+    null(data: any): data is null {
+        return data === null
+    }
+
+    undefined(data: any): data is undefined {
+        return data === undefined
+    }
+}
+
+export const strats = new Strategies()
+
+export type TypeCheckingStrategies<T extends Sendable> = Omit<
+    {
+        [Property in keyof T]-?: (data: any) => data is T[Property]
+    },
+    "channel"
+>
+
 /**
  * All the classes that can be sent at all, used to change the prototype of decoded objects
  */
-const sendableClasses: Map<string, { prototype: object }> = new Map()
+const sendableClasses: Map<
+    string,
+    [{ prototype: object }, { [key: string]: (data: any) => boolean }]
+> = new Map()
 
 /**
  * A decorator to make a class sendable via websockets
  * @param channel The channel this class should be sent through
  */
-export function MakeSendable(channel: string) {
-    return (constructor: {
-        new (...args: any[]): Sendable
-        channel(): string
-    }) => {
-        sendableClasses.set(channel, constructor)
+export function MakeSendable<T extends Sendable>(
+    channel: string,
+    strategies: TypeCheckingStrategies<T>
+) {
+    return (constructor: { new (...args: any[]): T; channel(): string }) => {
+        sendableClasses.set(channel, [constructor, strategies])
         constructor.prototype.channel = channel
     }
 }
@@ -277,14 +458,13 @@ function generateClass(
 ) {
     let ret: InputFieldClass<any>
     if (type == "string") {
-        ret = class extends Sendable {
+        @MakeSendable<NewClass>(`${channel}.${key}`, {
+            value: strats.any<string | null>(strats.string, strats.null),
+        })
+        class NewClass extends Sendable {
             constructor(value: string | null) {
                 super()
                 this.value = value
-            }
-
-            static channel() {
-                return this.prototype.channel as string
             }
 
             static type() {
@@ -293,15 +473,16 @@ function generateClass(
 
             value: string | null
         }
+
+        ret = NewClass
     } else if (type == "bool") {
-        ret = class extends Sendable {
+        @MakeSendable<NewClass>(`${channel}.${key}`, {
+            value: strats.boolean,
+        })
+        class NewClass extends Sendable {
             constructor(value: boolean) {
                 super()
                 this.value = value
-            }
-
-            static channel() {
-                return this.prototype.channel as string
             }
 
             static type() {
@@ -310,15 +491,16 @@ function generateClass(
 
             value: boolean
         }
+
+        ret = NewClass
     } /*if (type == "number")*/ else {
-        ret = class extends Sendable {
+        @MakeSendable<NewClass>(`${channel}.${key}`, {
+            value: strats.any<number | null>(strats.number, strats.null),
+        })
+        class NewClass extends Sendable {
             constructor(value: number | null) {
                 super()
                 this.value = value
-            }
-
-            static channel() {
-                return this.prototype.channel as string
             }
 
             static type() {
@@ -327,9 +509,9 @@ function generateClass(
 
             value: number | null
         }
-    }
 
-    MakeSendable(`${channel}.${key}`)(ret)
+        ret = NewClass
+    }
 
     return ret
 }
@@ -337,7 +519,7 @@ function generateClass(
 function everythingGenerator<T extends InputFieldsClassesConstraint<T>>(
     channel: string
 ) {
-    @MakeSendable(channel)
+    @MakeSendable<NewClass>(channel, {})
     class NewClass extends Sendable {
         [key: string]: AllowedInputFieldTypes | undefined
 
@@ -348,16 +530,38 @@ function everythingGenerator<T extends InputFieldsClassesConstraint<T>>(
                 this[key as string] = values[key] as AllowedInputFieldTypes
             }
         }
-
-        static channel() {
-            return this.prototype.channel as string
-        }
     }
 
     return NewClass as unknown as {
         new (values: T): Sendable & T
         channel(): string
     }
+}
+
+function requestDefaultGenerator(channel: string) {
+    @MakeSendable<NewClass>(`${channel}:default`, {})
+    class NewClass extends Sendable {}
+
+    return NewClass
+}
+
+function statusGenerator(channel: string) {
+    @MakeSendable<NewClass>(`${channel}:Status`, {
+        status: strats.any(strats.value("Error"), strats.value("Success")),
+        text: strats.string,
+    })
+    class NewClass extends Sendable implements ResponseInterface {
+        constructor(status: "Error" | "Success", text: string) {
+            super()
+            this.status = status
+            this.text = text
+        }
+
+        status: "Error" | "Success"
+        text: string
+    }
+
+    return NewClass
 }
 
 export interface ResponseInterface {
@@ -407,28 +611,8 @@ export class InputFields<T extends InputFieldsClassesConstraint<T>> {
         this.sendAsEverything = submitAsEverything
 
         this.Everything = everythingGenerator<T>(channel)
-        this.RequestDefault = class extends Sendable {
-            static channel() {
-                return this.prototype.channel as string
-            }
-        }
-        this.RequestDefault.prototype.channel = `${channel}:default`
-
-        this.Response = class extends Sendable implements ResponseInterface {
-            constructor(status: "Error" | "Success", text: string) {
-                super()
-                this.status = status
-                this.text = text
-            }
-
-            static channel() {
-                return this.prototype.channel as string
-            }
-
-            status: "Error" | "Success"
-            text: string
-        }
-        this.Response.prototype.channel = `${channel}:Response`
+        this.RequestDefault = requestDefaultGenerator(channel)
+        this.Status = statusGenerator(channel)
     }
 
     /**
@@ -465,7 +649,7 @@ export class InputFields<T extends InputFieldsClassesConstraint<T>> {
     /**
      * A class that can be passed into `send` implementations that represent either an error or success message
      */
-    Response: {
+    Status: {
         new (status: "Error" | "Success", text: string): Sendable &
             ResponseInterface
         channel(): string
