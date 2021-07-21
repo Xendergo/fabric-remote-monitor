@@ -10,6 +10,12 @@ export abstract class Sendable {
     }
 }
 
+interface Awaiter {
+    channel: string
+    predicate: (data: Sendable) => boolean
+    resolve: (data: Sendable) => void
+}
+
 /**
  * An interface to make dealing with unknown ListenerManagers easier
  *
@@ -43,6 +49,22 @@ export interface ListenerManager<TransferringType extends Sendable> {
      * @param data The data to send
      */
     send<T extends TransferringType>(data: T): void
+
+    /**
+     * Returns a promise that gets resolved when message of the expected class gets received, allowing you to await messages from the other side of the connection
+     *
+     * Only one awaiter can receive a message
+     * The priority of who gets what is decided by who called awaitMessage first
+     * A message can't trigger listeners if it's captured by a call of awaitMessage
+     *
+     * @param channelClass The class representing the data you want to await
+     * @param predicate Decides whether you want the promise to get resolved for the given channelClass
+     * @returns A promise that gets resolved when a message comes in that matches the channelClass and predicate
+     */
+    awaitMessage<T extends TransferringType>(
+        channelClass: { channel(): string; new (...data: any[]): T },
+        predicate: (message: T) => boolean
+    ): void
 }
 
 /**
@@ -110,8 +132,22 @@ export abstract class AbstractListenerManager<
 
         Object.setPrototypeOf(decoded, prototype)
 
+        for (let i = 0; i < this.awaiters.length; i++) {
+            const awaiter = this.awaiters[i]
+            if (
+                awaiter.channel === decoded.channel &&
+                awaiter.predicate(decoded)
+            ) {
+                awaiter.resolve(decoded)
+
+                this.awaiters.splice(i, 1)
+
+                return
+            }
+        }
+
         this.listeners
-            .get(decoded.channel!)
+            .get(decoded.channel)
             ?.forEach(callback => callback(decoded))
     }
 
@@ -143,6 +179,7 @@ export abstract class AbstractListenerManager<
         callback: (data: T) => void
     ) {
         const channel = channelClass.channel()
+
         if (!this.listeners.has(channel)) return
 
         this.listeners.get(channel)!.delete(callback as any)
@@ -167,6 +204,30 @@ export abstract class AbstractListenerManager<
         data.channel = Object.getPrototypeOf(data).channel
 
         this.transmit(this.encode(data))
+    }
+
+    /**
+     * Returns a promise that gets resolved when message of the expected class gets received, allowing you to await messages from the other side of the connection
+     *
+     * Only one awaiter can receive a message
+     * The priority of who gets what is decided by who called awaitMessage first
+     * A message can't trigger listeners if it's captured by a call of awaitMessage
+     *
+     * @param channelClass The class representing the data you want to await
+     * @param predicate Decides whether you want the promise to get resolved for the given channelClass
+     * @returns A promise that gets resolved when a message comes in that matches the channelClass and predicate
+     */
+    awaitMessage<T extends TransferringType>(
+        channelClass: { channel(): string; new (...data: any[]): T },
+        predicate: (message: T) => boolean
+    ) {
+        return new Promise((resolve, reject) => {
+            this.awaiters.push({
+                channel: channelClass.channel(),
+                predicate: predicate as unknown as (data: Sendable) => boolean,
+                resolve: resolve,
+            })
+        })
     }
 
     private queue: Array<TransferringType> = []
@@ -205,6 +266,8 @@ export abstract class AbstractListenerManager<
 
     private listeners: Map<string, Set<(data: TransferringType) => void>> =
         new Map()
+
+    private awaiters: Array<Awaiter> = []
 }
 
 export type TypeCheckingStrategies<T extends Sendable> = Omit<
