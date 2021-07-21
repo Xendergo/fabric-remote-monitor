@@ -1,6 +1,8 @@
 type EachType<T extends object> = {
-    +readonly [Property in keyof T]-?: (data: any) => data is T[Property]
+    +readonly [Property in keyof T]-?: strat<T[Property]>
 }
+
+type strat<T> = (data: any) => data is T
 
 /**
  * A set of common strategies that you can input into {@link MakeSendable} so you don't have to constantly retype the same long functions
@@ -96,7 +98,7 @@ class Strategies {
      * @returns A strategy for type checking the whole array
      * @typeParam `T` - The type you expect to be contained by the array
      */
-    Array<T>(strat: (data: any) => data is T) {
+    Array<T>(strat: strat<T>) {
         return function (data: any): data is Array<T> {
             if (!Array.isArray(data)) {
                 return false
@@ -132,6 +134,58 @@ class Strategies {
     isPrototype<T>() {
         return function (data: any): data is T {
             return data === undefined
+        }
+    }
+
+    /**
+     * Trust that a value is always the correct type, never use except for testing or if you're using this library for threading
+     * @returns A strategy always returning true
+     * @typeParam `T` - The type you're checking for
+     */
+    trust<T>() {
+        return function (data: any): data is T {
+            return true
+        }
+    }
+
+    /**
+     * Return a strategy that type checks a value and applies a filter to ensure the value is valid
+     * @param strat A strategy to ensure the value is the correct type
+     * @param filter A filter to narrow down the allowed values
+     * @returns A strategy checking the type and applying the filter
+     * @typeParam `T` - The type you're checking for
+     */
+    and<T>(strat: strat<T>, filter: (data: T) => boolean) {
+        return function (data: any): data is T {
+            return strat(data) && filter(data)
+        }
+    }
+
+    /**
+     * Returns a strategy that checks if a value is a T1 and then if T1 is a T2
+     * @param strat1 The strategy for checking if the value is a T1
+     * @param strat2 The strategy for checking if the T1 is a T2
+     * @returns A strategy checking that the value is T2
+     * @typeParam `T1` - The intermediate type you're checking for first
+     * @typeParam `T2` - The type you're checking for
+     */
+    narrow<T1, T2 extends T1>(
+        strat1: strat<T1>,
+        strat2: (data: T1) => data is T2
+    ) {
+        return function (data: any): data is T2 {
+            return strat1(data) && strat2(data)
+        }
+    }
+
+    /**
+     * Returns a strategy that checks if a value is a string and matches a regex
+     * @param regex The regex to test against
+     * @returns The strategy testing if a value matches the regex
+     */
+    match(regex: RegExp) {
+        return function (data: any): data is string {
+            return typeof data === "string" && regex.test(data)
         }
     }
 
