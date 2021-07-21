@@ -56,6 +56,12 @@
         height: 100vh;
     }
 
+    div {
+        position: absolute;
+        top: calc(16px + 5vh);
+        left: 8px;
+    }
+
     :global(input),
     :global(button) {
         border: 2px solid white;
