@@ -1,11 +1,11 @@
 import { int, TagType } from "../mc-communication/nbt"
 import {
-    InputFields,
     MakeSendable,
     Sendable,
     TypeCheckingStrategies,
 } from "../../sendableTypes/sendableTypesHelpers"
 import { strats } from "../../sendableTypes/defaultStrategies"
+import { InputFields } from "../../sendableTypes/inputFields"
 
 /**
  * A class representing a class that can be sent via websockets or NBT

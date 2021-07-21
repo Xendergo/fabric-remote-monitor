@@ -2,11 +2,14 @@
     import { onDestroy } from "svelte"
 
     import type {
-        InputFields,
         ListenerManager,
-        ResponseInterface,
         Sendable,
     } from "../../../../../sendableTypes/sendableTypesHelpers"
+
+    import type {
+        InputFields,
+        ResponseInterface,
+    } from "../../../../../sendableTypes/inputFields"
 
     export let inputFields: InputFields<any>
     export let listenerManager: ListenerManager<Sendable>

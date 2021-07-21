@@ -1,11 +1,14 @@
 import { writable, Writable } from "svelte/store"
 import type {
-    AllowedInputFieldTypes,
-    InputFields,
-    InputFieldsClassesConstraint,
     Sendable,
     ListenerManager,
 } from "../../../sendableTypes/sendableTypesHelpers"
+
+import type {
+    AllowedInputFieldTypes,
+    InputFields,
+    InputFieldsClassesConstraint,
+} from "../../../sendableTypes/inputFields"
 
 /**
  * A writable store used by {@link InputFieldsAsStores} which allows giving the option to not update the server about certain things
