@@ -1,12 +1,15 @@
 import ws from "ws"
 import { connectedUsers } from ".."
 import {
-    ListenerManager,
+    AbstractListenerManager,
     Sendable,
 } from "../../sendableTypes/sendableTypesHelpers"
 import { ConnectedUser } from "./ConnectedUser"
 
-export class WsConnectionManager extends ListenerManager<Sendable, string> {
+export class WsConnectionManager extends AbstractListenerManager<
+    Sendable,
+    string
+> {
     constructor(socket: ws, user: ConnectedUser) {
         super()
         this.ready()

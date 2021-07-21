@@ -1,10 +1,13 @@
 import net from "net"
 import { decode, encode } from "./nbt"
-import { ListenerManager } from "../../sendableTypes/sendableTypesHelpers"
+import { AbstractListenerManager } from "../../sendableTypes/sendableTypesHelpers"
 import { logger } from ".."
 import { nbtSendable, NbtSendable } from "../networking/sendableTypes"
 
-export class MinecraftInterface extends ListenerManager<NbtSendable, Buffer> {
+export class MinecraftInterface extends AbstractListenerManager<
+    NbtSendable,
+    Buffer
+> {
     constructor(port: number) {
         super()
 

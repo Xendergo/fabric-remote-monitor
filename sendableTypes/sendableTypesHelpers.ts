@@ -13,6 +13,41 @@ export abstract class Sendable {
 }
 
 /**
+ * An interface to make dealing with unknown ListenerManagers easier
+ *
+ * Instead of implementing this interface, you'd probably have a nicer time implementing {@link AbstractListenerManager}
+ *
+ * @typeParam `TransferringType` The type of data you're allowed to send through this listener manager
+ */
+export interface ListenerManager<TransferringType extends Sendable> {
+    /**
+     * Listen for data sent by the other side of this connection, the data's prototype is also changed automatically so you get an actual instance of the class back
+     * @param channelClass The class you're expecting to receive
+     * @param callback Called when the listener manager received data on this channel
+     */
+    listen<T extends TransferringType>(
+        channelClass: { channel(): string; new (...data: any[]): T },
+        callback: (data: T) => void
+    ): void
+
+    /**
+     * Stop listening for data on the other side of this connection
+     * @param channelClass The class the callback expects to receive
+     * @param callback The callback to unsubscribe
+     */
+    stopListening<T extends TransferringType>(
+        channelClass: { channel(): string; new (...data: any[]): T },
+        callback: (data: T) => void
+    ): void
+
+    /**
+     * Send data to the other side of this connection
+     * @param data The data to send
+     */
+    send<T extends TransferringType>(data: T): void
+}
+
+/**
  * A class to provide the common implementation details for classes managing communication using this API
  *
  * HOW TO IMPLEMENT:
@@ -26,10 +61,11 @@ export abstract class Sendable {
  * @typeParam `TransferringType` The data type that users of the implementing manager would receive and send
  * @typeParam `IOType` The data type that this manager converts `TransferringType` to and from, and is what's sent over the network
  */
-export abstract class ListenerManager<
+export abstract class AbstractListenerManager<
     TransferringType extends Sendable,
     IOType
-> {
+> implements ListenerManager<TransferringType>
+{
     /**
      * Implementors must call this function when they receive data from the other end of the network
      * @param data The data received

@@ -9,7 +9,7 @@
     } from "../../../../../sendableTypes/sendableTypesHelpers"
 
     export let inputFields: InputFields<any>
-    export let listenerManager: ListenerManager<Sendable, any>
+    export let listenerManager: ListenerManager<Sendable>
 
     let status = "Error"
     let text = ""

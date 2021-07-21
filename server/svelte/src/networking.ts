@@ -2,7 +2,7 @@ import { resetPassword, discordInput } from "../../networking/sendableTypes"
 import { InputFieldsAsStores } from "./inputFieldsToStoresConverter"
 import {
     Sendable,
-    ListenerManager,
+    AbstractListenerManager,
 } from "../../../sendableTypes/sendableTypesHelpers"
 
 export let isAdmin = false
@@ -11,7 +11,10 @@ export function setAdmin(newAdmin: boolean) {
     isAdmin = newAdmin
 }
 
-class ClientConnectionManager extends ListenerManager<Sendable, string> {
+class ClientConnectionManager extends AbstractListenerManager<
+    Sendable,
+    string
+> {
     constructor() {
         super()
 

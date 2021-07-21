@@ -3,8 +3,8 @@ import type {
     AllowedInputFieldTypes,
     InputFields,
     InputFieldsClassesConstraint,
-    ListenerManager,
     Sendable,
+    ListenerManager,
 } from "../../../sendableTypes/sendableTypesHelpers"
 
 /**
@@ -67,7 +67,7 @@ export class InputFieldsAsStores<T extends InputFieldsClassesConstraint<T>> {
      */
     constructor(
         fields: InputFields<T>,
-        listenerManager: ListenerManager<Sendable, any>
+        listenerManager: ListenerManager<Sendable>
     ) {
         let thisFields: AsWritable<T> = {} as AsWritable<T>
 
@@ -108,7 +108,7 @@ export class InputFieldsAsStores<T extends InputFieldsClassesConstraint<T>> {
 
     private addListeners(
         fields: InputFields<T>,
-        listenerManager: ListenerManager<Sendable, any>
+        listenerManager: ListenerManager<Sendable>
     ) {
         listenerManager.listen(fields.Everything, data => {
             for (const key in data) {
