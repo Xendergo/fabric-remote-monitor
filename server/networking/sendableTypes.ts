@@ -3,9 +3,9 @@ import {
     InputFields,
     MakeSendable,
     Sendable,
-    strats,
     TypeCheckingStrategies,
 } from "../../sendableTypes/sendableTypesHelpers"
+import { strats } from "../../sendableTypes/defaultStrategies"
 
 /**
  * A class representing a class that can be sent via websockets or NBT
