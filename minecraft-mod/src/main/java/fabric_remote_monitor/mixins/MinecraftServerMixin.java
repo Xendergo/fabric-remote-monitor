@@ -9,11 +9,11 @@ import fabric_remote_monitor.fakes.MinecraftServerInterface;
 import net.minecraft.server.MinecraftServer;
 
 @Mixin(MinecraftServer.class)
-public class MinecraftServerMixin implements MinecraftServerInterface {
+public abstract class MinecraftServerMixin implements MinecraftServerInterface {
     ServerInterface serverInterface;
 
-    public void constructServerInterface() {
-        serverInterface = new ServerInterface(new File("config"));
+    public void constructServerInterface(MinecraftServer server) {
+        serverInterface = new ServerInterface(new File("config"), server);
     }
 
     public ServerInterface getServerInterface() {

@@ -11,12 +11,14 @@ import java.util.function.Consumer;
 
 import org.apache.logging.log4j.Level;
 
+import fabric_remote_monitor.menus.Gamerules;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.MinecraftServer;
 
 public class ServerInterface {
-    public ServerInterface(File configFolder) {
+    public ServerInterface(File configFolder, MinecraftServer server) {
         var config = ParseConfig.parseConfig(configFolder);
 
         var portMaybeNull = config.get("port");
@@ -35,8 +37,6 @@ public class ServerInterface {
         try {
             socket = new Socket("127.0.0.1", port);
 
-            FabricRemoteMonitor.log(Level.INFO, "CONNECTED!!!!");
-
             thisThread = new SocketReaderThread(socket, this);
             thisThread.start();
         } catch (IOException e) {
@@ -44,6 +44,8 @@ public class ServerInterface {
 
             e.printStackTrace();
         }
+
+        Gamerules.onConnect(this, server);
     }
 
     public void SendMessage(String channel, NbtCompound data) {

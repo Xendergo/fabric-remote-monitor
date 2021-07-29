@@ -11,6 +11,7 @@ import { minecraftInterface } from ".."
 import { discordListeners } from "./ConfigMenus/Discord"
 import { accountListeners } from "./ConfigMenus/Account"
 import { discordBot } from "../index"
+import { gamerulesListeners } from "./ConfigMenus/Gamerules"
 
 export class ConnectedUser {
     constructor(socket: ws) {
@@ -32,7 +33,7 @@ export class ConnectedUser {
 
             this.user = maybeUser
 
-            accountListeners(this.connectionManager, this.user)
+            this.listenAll()
 
             if (this.user.admin) {
                 this.listenAdminOnly()
@@ -56,8 +57,13 @@ export class ConnectedUser {
         )
     }
 
+    private listenAll() {
+        accountListeners(this.connectionManager, this.user!)
+    }
+
     private listenAdminOnly() {
         discordListeners(this.connectionManager)
+        gamerulesListeners(this.connectionManager)
     }
 
     socket: ws

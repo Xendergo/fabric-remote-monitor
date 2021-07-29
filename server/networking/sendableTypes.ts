@@ -41,16 +41,19 @@ export function parseNbtInput(data: Map<string, TagType>) {
  */
 export function MakeNbtSendable<T extends NbtSendable>(
     channel: string,
-    theseStrats: Omit<TypeCheckingStrategies<T>, "encode">,
-    decode: (data: Map<string, TagType>) => T
+    theseStrats: Omit<TypeCheckingStrategies<T>, "encode">
 ) {
-    return (constructor: { new (...args: any[]): T; channel(): string }) => {
+    return (constructor: {
+        new (...args: any[]): T
+        channel(): string
+        decode(data: Map<string, TagType>): T
+    }) => {
         const theseConvertedStrats = theseStrats as TypeCheckingStrategies<T>
 
         theseConvertedStrats.encode = strats.isPrototype()
 
         MakeSendable<T>(channel, theseConvertedStrats)(constructor)
-        nbtSendable.set(channel, decode)
+        nbtSendable.set(channel, constructor.decode)
     }
 }
 
@@ -69,19 +72,10 @@ export class LoginDetails extends Sendable {
     password: string
 }
 
-@MakeNbtSendable<SignupDetails>(
-    "SignupDetails",
-    {
-        username: strats.string,
-        password: strats.string,
-    },
-    data => {
-        return new SignupDetails(
-            data.get("username")! as string,
-            data.get("password")! as string
-        )
-    }
-)
+@MakeNbtSendable<SignupDetails>("SignupDetails", {
+    username: strats.string,
+    password: strats.string,
+})
 export class SignupDetails extends NbtSendable {
     constructor(username: string, password: string) {
         super()
@@ -94,6 +88,13 @@ export class SignupDetails extends NbtSendable {
 
     encode() {
         return new Map(Object.entries(this))
+    }
+
+    static decode(data: Map<string, TagType>) {
+        return new SignupDetails(
+            data.get("username")! as string,
+            data.get("password")! as string
+        )
     }
 }
 
@@ -112,31 +113,12 @@ export class LoginSuccessful extends Sendable {
     isAdmin: boolean
 }
 
-@MakeNbtSendable(
-    "MirrorMessage",
-    {
-        message: strats.string,
-        style: function (data: any): data is Style {
-            return true
-        },
+@MakeNbtSendable("MirrorMessage", {
+    message: strats.string,
+    style: function (data: any): data is Style {
+        return true
     },
-    data => {
-        const style = (data.get("style")! as int).value
-
-        return new MirrorMessage(data.get("message")! as string, {
-            color: [
-                (Number(style) & 0xff000000) >>> 24,
-                (Number(style) & 0x00ff0000) >>> 16,
-                (Number(style) & 0x0000ff00) >>> 8,
-            ],
-            bold: (style & 1n) != 0n,
-            italic: (style & 2n) != 0n,
-            underlined: (style & 4n) != 0n,
-            strikethrough: (style & 8n) != 0n,
-            obfuscated: (style & 16n) != 0n,
-        })
-    }
-)
+})
 export class MirrorMessage extends NbtSendable {
     constructor(message: string, style: Style) {
         super()
@@ -167,6 +149,23 @@ export class MirrorMessage extends NbtSendable {
         })
 
         return ret
+    }
+
+    static decode(data: Map<string, TagType>) {
+        const style = (data.get("style")! as int).value
+
+        return new MirrorMessage(data.get("message")! as string, {
+            color: [
+                (Number(style) & 0xff000000) >>> 24,
+                (Number(style) & 0x00ff0000) >>> 16,
+                (Number(style) & 0x0000ff00) >>> 8,
+            ],
+            bold: (style & 1n) != 0n,
+            italic: (style & 2n) != 0n,
+            underlined: (style & 4n) != 0n,
+            strikethrough: (style & 8n) != 0n,
+            obfuscated: (style & 16n) != 0n,
+        })
     }
 }
 
@@ -205,6 +204,60 @@ export class Popup extends Sendable {
 
     title
     text
+}
+
+@MakeNbtSendable<Gamerules>("Gamerules", {
+    gamerules: strats.Array<Gamerule>(
+        strats.each<Gamerule>({
+            name: strats.string,
+            default: strats.string,
+        })
+    ),
+})
+export class Gamerules extends NbtSendable {
+    constructor(gamerules: Gamerule[]) {
+        super()
+        this.gamerules = gamerules
+    }
+
+    gamerules: Gamerule[]
+
+    encode(): Map<string, TagType> {
+        const ret = new Map<string, TagType>()
+
+        ret.set(
+            "gamerules",
+            this.gamerules.map(v => {
+                const map = new Map<string, TagType>()
+
+                map.set("name", v.name)
+                map.set("default", v.default)
+
+                return map
+            })
+        )
+
+        return ret
+    }
+
+    static decode(data: Map<string, TagType>) {
+        return new Gamerules(
+            (data.get("gamerules")! as Map<string, TagType>[]).map(v => {
+                return {
+                    name: v.get("name") as string,
+                    default: v.get("default") as string,
+                }
+            })
+        )
+    }
+}
+
+@MakeSendable("DefaultGamerules", {})
+export class DefaultGamerules extends Sendable {}
+
+export interface Gamerule {
+    name: string
+    default: string
 }
 
 interface DiscordInput {

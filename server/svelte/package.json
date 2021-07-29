@@ -19,5 +19,8 @@
     "tslib": "^2.2.0",
     "typescript": "^4.3.2",
     "vite": "^2.3.8"
+  },
+  "dependencies": {
+    "svelte-markdown": "^0.1.10"
   }
 }

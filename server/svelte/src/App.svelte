@@ -8,6 +8,7 @@
     import Account from "./pages/Account.svelte"
     import { popups } from "./popupManager"
     import Popup from "./components/Popup.svelte"
+    import Gamerules from "./pages/Gamerules.svelte"
 
     const conf = {
         duration: 200,
@@ -20,7 +21,7 @@
     {/if}
     <Tabs />
     {#if $page == Pages.Login}
-        <div in:fade={conf} out:fade={conf}>
+        <div in:fade={conf} out:fade={conf} class="login">
             <Login />
         </div>
     {:else if $page == Pages.Home}
@@ -34,6 +35,10 @@
     {:else if $page == Pages.Account}
         <div in:fade={conf} out:fade={conf}>
             <Account />
+        </div>
+    {:else if $page == Pages.Gamerules}
+        <div in:fade={conf} out:fade={conf}>
+            <Gamerules />
         </div>
     {/if}
 </main>
@@ -60,6 +65,11 @@
         position: absolute;
         top: calc(16px + 5vh);
         left: 8px;
+    }
+
+    .login {
+        top: 0;
+        left: 0;
     }
 
     :global(input),

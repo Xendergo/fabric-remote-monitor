@@ -28,7 +28,7 @@ public class FabricRemoteMonitor implements ModInitializer {
 
             MinecraftServerInterface serverAdditions = (MinecraftServerInterface)server;
 
-            serverAdditions.constructServerInterface();
+            serverAdditions.constructServerInterface(server);
 
             ServerInterface serverInterface = serverAdditions.getServerInterface();
 
