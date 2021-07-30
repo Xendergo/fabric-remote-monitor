@@ -1,3 +1,5 @@
+import type { Registry } from "./registry"
+
 /**
  * A class representing a class that can be sent via websockets
  * The `channel` field doesn't have to be overriden since the {@link MakeSendable} or {@link MakeNbtSendable} decorator will do that for you
@@ -78,23 +80,41 @@ export interface ListenerManager<TransferringType extends Sendable> {
  * `encode` & `decode` only need to faithfully encode and decode the data given to it, everything else is handled by the ListenerManager class.
  * For example, if the `IOType` is json encoded text, just using `JSON.parse` & `JSON.stringify` would work just fine
  *
+ * `finalize` is passed in the type checkers, and is responsible for type checking the data given to it wherever it needs to.
+ * It must also faithfully convert the `IntermediateType` to the `TransferringType`.
+ * Prototype changes are handled automatically
+ * For example, if the IOType is JSON encoded text, and the IntermediateType is the return value of JSON.parse, then simply running the type checkers, throwing an error if they fail, and returning the same value is good enough.
+ *
  * @typeParam `TransferringType` The data type that users of the implementing manager would receive and send
+ * @typeParam `IntermediateType` The type that `decode` will decode to, and that `finalize` will convert from.
+ * This is useful for being able to get a channel out of data, without decoding the data to it's final state.
+ * That's useful for type checking data to make sure it *can* be decoded to it's final state before it is.
  * @typeParam `IOType` The data type that this manager converts `TransferringType` to and from, and is what's sent over the network
  */
 export abstract class AbstractListenerManager<
     TransferringType extends Sendable,
-    IOType
+    IntermediateType,
+    IOType,
+    TypeCheckingLayers extends Array<(data: any) => boolean>,
+    CustomData = undefined
 > implements ListenerManager<TransferringType>
 {
+    constructor(
+        registry: Registry<TransferringType, TypeCheckingLayers, CustomData>
+    ) {
+        this.registry = registry
+    }
+
     /**
      * Implementors must call this function when they receive data from the other end of the network
      * @param data The data received
      */
     protected onData(data: IOType) {
-        let decoded: TransferringType
+        let intermediate: IntermediateType
+        let channel: any
 
         try {
-            decoded = this.decode(data)
+            ;[channel, intermediate] = this.decode(data)
         } catch (e) {
             console.warn(
                 `Dropped message because decoder threw an error: \n ${e} \n\n ${data}`
@@ -102,42 +122,42 @@ export abstract class AbstractListenerManager<
             return
         }
 
-        if (!decoded.channel) {
+        if (!(typeof channel === "string")) {
             console.warn(
-                `Dropped message for not having a channel: \n ${decoded} \n\n ${data}`
+                `Dropped message since \`channel\` is not a string: \n ${intermediate} \n\n ${data}`
             )
 
             return
         }
 
-        if (!sendableClasses.has(decoded.channel)) {
+        if (!this.registry.entries.has(channel)) {
             console.warn(
-                `Dropped message because it's channel (${decoded.channel}) isn't included in the registry (did you remember to use @MakeSendable on it?): \n ${decoded} \n\n ${data}`
+                `Dropped message because it's channel (${channel}) isn't included in the registry (did you remember to use @MakeSendable on it?): \n ${intermediate} \n\n ${data}`
             )
 
             return
         }
 
-        const [prototype, strategies] = sendableClasses.get(decoded.channel)!
+        const [classType, strats, customData] =
+            this.registry.entries.get(channel)!
 
-        for (const key in strategies) {
-            if (!strategies[key]((decoded as { [key: string]: any })[key])) {
-                console.warn(
-                    `Dropped message because it failed the type check for key \`${key}\`: \n ${decoded} \n\n ${data}`
-                )
+        let decoded: TransferringType
 
-                return
-            }
+        try {
+            decoded = this.finalize(intermediate, strats, customData)
+        } catch (e) {
+            console.warn(
+                `Dropped message because converting to the TransferringType failed: ${e}: \n ${intermediate} \n\n ${data}`
+            )
+
+            return
         }
 
-        Object.setPrototypeOf(decoded, prototype)
+        Object.setPrototypeOf(intermediate, classType.prototype)
 
         for (let i = 0; i < this.awaiters.length; i++) {
             const awaiter = this.awaiters[i]
-            if (
-                awaiter.channel === decoded.channel &&
-                awaiter.predicate(decoded)
-            ) {
+            if (awaiter.channel === channel && awaiter.predicate(decoded)) {
                 awaiter.resolve(decoded)
 
                 this.awaiters.splice(i, 1)
@@ -146,9 +166,7 @@ export abstract class AbstractListenerManager<
             }
         }
 
-        this.listeners
-            .get(decoded.channel)
-            ?.forEach(callback => callback(decoded))
+        this.listeners.get(channel)?.forEach(callback => callback(decoded))
     }
 
     /**
@@ -190,9 +208,9 @@ export abstract class AbstractListenerManager<
      * @param data The data to send
      */
     send<T extends TransferringType>(data: T) {
-        if (!sendableClasses.has(data.channel!)) {
+        if (!this.registry.entries.has(data.channel!)) {
             throw new Error(
-                "The class being sent isn't registered in the list of sendable classes, did you remember to use @MakeSendable on it?"
+                "The class being sent isn't registered in the registry, did you remember to use @MakeSendable on it?"
             )
         }
 
@@ -203,7 +221,15 @@ export abstract class AbstractListenerManager<
 
         data.channel = Object.getPrototypeOf(data).channel
 
-        this.transmit(this.encode(data))
+        let encoded: IOType
+
+        try {
+            encoded = this.encode(data)
+        } catch (e) {
+            throw new Error(`The data being sent couldn't be encoded: ${e}`)
+        }
+
+        this.transmit(encoded)
     }
 
     /**
@@ -253,10 +279,10 @@ export abstract class AbstractListenerManager<
     protected abstract encode(data: TransferringType): IOType
 
     /**
-     * Decode data from the `IOType` to the `TransferringType`
+     * Decode data from the `IOType` to the `IntermediateType`
      * @param data The data to decode
      */
-    protected abstract decode(data: IOType): TransferringType
+    protected abstract decode(data: IOType): [any, IntermediateType]
 
     /**
      * Transmit data to the other side of the network connection
@@ -264,10 +290,18 @@ export abstract class AbstractListenerManager<
      */
     protected abstract transmit(data: IOType): void
 
+    protected abstract finalize(
+        data: IntermediateType,
+        typeCheckingLayers: TypeCheckingLayers,
+        customData: CustomData
+    ): TransferringType
+
     private listeners: Map<string, Set<(data: TransferringType) => void>> =
         new Map()
 
     private awaiters: Array<Awaiter> = []
+
+    private registry: Registry<TransferringType, TypeCheckingLayers, CustomData>
 }
 
 export type TypeCheckingStrategies<T extends Sendable> = Omit<
@@ -278,24 +312,34 @@ export type TypeCheckingStrategies<T extends Sendable> = Omit<
 >
 
 /**
- * All the classes that can be sent at all, used to change the prototype of decoded objects
- */
-const sendableClasses: Map<
-    string,
-    [{ prototype: object }, { [key: string]: (data: any) => boolean }]
-> = new Map()
-
-/**
  * A decorator to make a class sendable via websockets
  * @param channel The channel this class should be sent through
  * @param strategies An object of strategies for type checking the values sent representing this class, in case someone sends invalid information to the server
  */
-export function MakeSendable<T extends Sendable>(
+export function MakeSendable<
+    T extends Sendable,
+    TypeCheckingLayers extends Array<(data: any) => boolean>
+>(
+    registry: Registry<T, TypeCheckingLayers, undefined>,
     channel: string,
-    strategies: TypeCheckingStrategies<T>
+    strategies: TypeCheckingLayers
+) {
+    return MakeSendableWithData(registry, channel, strategies, undefined)
+}
+
+export function MakeSendableWithData<
+    T extends Sendable,
+    TypeCheckingLayers extends Array<(data: any) => boolean>,
+    CustomData = undefined
+>(
+    registry: Registry<T, TypeCheckingLayers, CustomData>,
+    channel: string,
+    strategies: TypeCheckingLayers,
+    customData: CustomData
 ) {
     return (constructor: { new (...args: any[]): T; channel(): string }) => {
-        sendableClasses.set(channel, [constructor, strategies])
         constructor.prototype.channel = channel
+
+        registry.register(constructor, strategies, customData)
     }
 }

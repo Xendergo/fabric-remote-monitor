@@ -1,5 +1,6 @@
 import { strats } from "./defaultStrategies"
-import { MakeSendable, Sendable, ListenerManager } from "./sendableTypesHelpers"
+import type { Registry } from "./registry"
+import { MakeSendable, Sendable } from "./sendableTypesHelpers"
 
 /**
  * The names of the types allowed to be sent via an {@link InputFields} instance
@@ -112,21 +113,25 @@ export type InputFieldClass<T> = {
 
 /**
  * Generates a class meant to be passed into a `send` function that represents a field in a {@link InputFields} instance
+ * @param registry The registry to register the class in
  * @param channel The channel the {@link InputFields} instance calling this is to be send through, combined with `key` to form a unique channel for this particular class
  * @param key The name of the field the class will be generated for
  * @param type The name of the type the class will be generated to send
  * @returns A class meant to be sent via regular `send` implementations to send a field in a {@link InputFields} instance
  */
 function generateClass(
+    registry: Registry<Sendable, [(data: any) => boolean]>,
     channel: string,
     key: string,
     type: AllowedInputFieldTypesNames
 ) {
     let ret: InputFieldClass<any>
     if (type == "string") {
-        @MakeSendable<NewClass>(`${channel}.${key}`, {
-            value: strats.any<string | null>(strats.string, strats.null),
-        })
+        @MakeSendable(registry, `${channel}.${key}`, [
+            strats.each({
+                value: strats.any<string | null>(strats.string, strats.null),
+            }),
+        ])
         class NewClass extends Sendable {
             constructor(value: string | null) {
                 super()
@@ -142,9 +147,11 @@ function generateClass(
 
         ret = NewClass
     } else if (type == "bool") {
-        @MakeSendable<NewClass>(`${channel}.${key}`, {
-            value: strats.boolean,
-        })
+        @MakeSendable(registry, `${channel}.${key}`, [
+            strats.each({
+                value: strats.boolean,
+            }),
+        ])
         class NewClass extends Sendable {
             constructor(value: boolean) {
                 super()
@@ -160,9 +167,11 @@ function generateClass(
 
         ret = NewClass
     } /*if (type == "number")*/ else {
-        @MakeSendable<NewClass>(`${channel}.${key}`, {
-            value: strats.any<number | null>(strats.number, strats.null),
-        })
+        @MakeSendable(registry, `${channel}.${key}`, [
+            strats.each({
+                value: strats.any<number | null>(strats.number, strats.null),
+            }),
+        ])
         class NewClass extends Sendable {
             constructor(value: number | null) {
                 super()
@@ -183,9 +192,10 @@ function generateClass(
 }
 
 function everythingGenerator<T extends InputFieldsClassesConstraint<T>>(
+    registry: Registry<Sendable, [(data: any) => boolean]>,
     channel: string
 ) {
-    @MakeSendable<NewClass>(channel, {})
+    @MakeSendable(registry, channel, [strats.trust()])
     class NewClass extends Sendable {
         [key: string]: AllowedInputFieldTypes | undefined
 
@@ -204,18 +214,26 @@ function everythingGenerator<T extends InputFieldsClassesConstraint<T>>(
     }
 }
 
-function requestDefaultGenerator(channel: string) {
-    @MakeSendable<NewClass>(`${channel}:default`, {})
+function requestDefaultGenerator(
+    registry: Registry<Sendable, [(data: any) => boolean]>,
+    channel: string
+) {
+    @MakeSendable(registry, `${channel}:default`, [strats.trust()])
     class NewClass extends Sendable {}
 
     return NewClass
 }
 
-function statusGenerator(channel: string) {
-    @MakeSendable<NewClass>(`${channel}:Status`, {
-        status: strats.any(strats.value("Error"), strats.value("Success")),
-        text: strats.string,
-    })
+function statusGenerator(
+    registry: Registry<Sendable, [(data: any) => boolean]>,
+    channel: string
+) {
+    @MakeSendable(registry, `${channel}:Status`, [
+        strats.each({
+            status: strats.any(strats.value("Error"), strats.value("Success")),
+            text: strats.string,
+        }),
+    ])
     class NewClass extends Sendable implements ResponseInterface {
         constructor(status: "Error" | "Success", text: string) {
             super()
@@ -251,6 +269,7 @@ export class InputFields<T extends InputFieldsClassesConstraint<T>> {
      * @param submitAsEverything If this is set, send the entire input field through the Everything channel & use the text for the submit button
      */
     constructor(
+        registry: Registry<Sendable, [(data: any) => boolean]>,
         channel: string,
         fields: InputFieldsTypes<T>,
         submitAsEverything: string | null = null
@@ -259,10 +278,10 @@ export class InputFields<T extends InputFieldsClassesConstraint<T>> {
             .map(v => {
                 const [key, value] = v as [string, InputFieldOptions]
 
-                return [key, generateClass(channel, key, value.type)] as [
-                    string,
-                    InputFieldClass<AllowedInputFieldTypes>
-                ]
+                return [
+                    key,
+                    generateClass(registry, channel, key, value.type),
+                ] as [string, InputFieldClass<AllowedInputFieldTypes>]
             })
             .reduce<{ [key: string]: InputFieldClass<AllowedInputFieldTypes> }>(
                 (a, v) => {
@@ -276,9 +295,9 @@ export class InputFields<T extends InputFieldsClassesConstraint<T>> {
 
         this.sendAsEverything = submitAsEverything
 
-        this.Everything = everythingGenerator<T>(channel)
-        this.RequestDefault = requestDefaultGenerator(channel)
-        this.Status = statusGenerator(channel)
+        this.Everything = everythingGenerator<T>(registry, channel)
+        this.RequestDefault = requestDefaultGenerator(registry, channel)
+        this.Status = statusGenerator(registry, channel)
     }
 
     /**

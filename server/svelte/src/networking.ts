@@ -1,4 +1,8 @@
-import { resetPassword, discordInput } from "../../networking/sendableTypes"
+import {
+    resetPassword,
+    discordInput,
+    websiteRegistry,
+} from "../../networking/sendableTypes"
 import { InputFieldsAsStores } from "./inputFieldsToStoresConverter"
 import {
     Sendable,
@@ -13,10 +17,12 @@ export function setAdmin(newAdmin: boolean) {
 
 class ClientConnectionManager extends AbstractListenerManager<
     Sendable,
-    string
+    object,
+    string,
+    [(data: any) => boolean]
 > {
     constructor() {
-        super()
+        super(websiteRegistry)
 
         this.ws = new WebSocket(`ws://${location.host}/ws`)
 
@@ -33,12 +39,22 @@ class ClientConnectionManager extends AbstractListenerManager<
         return JSON.stringify(dataObj)
     }
 
-    decode(data: string) {
-        return JSON.parse(data)
+    decode(data: string): [string, object] {
+        const parsed = JSON.parse(data)
+
+        return [parsed.channel, parsed]
     }
 
     transmit(data: string) {
         this.ws.send(data)
+    }
+
+    finalize(data: object, typeCheckers: [(data: any) => boolean]) {
+        if (!typeCheckers[0](data)) {
+            throw new Error("Type checking failed")
+        }
+
+        return data as Sendable
     }
 
     ws

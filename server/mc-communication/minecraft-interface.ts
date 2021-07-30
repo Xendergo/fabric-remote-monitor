@@ -1,15 +1,18 @@
 import net from "net"
-import { decode, encode } from "./nbt"
+import { decode, encode, TagType } from "./nbt"
 import { AbstractListenerManager } from "../../sendableTypes/sendableTypesHelpers"
 import { logger } from ".."
-import { nbtSendable, NbtSendable } from "../networking/sendableTypes"
+import { NbtSendable, nbtRegistry } from "../networking/sendableTypes"
 
 export class MinecraftInterface extends AbstractListenerManager<
     NbtSendable,
-    Buffer
+    Map<string, TagType>,
+    Buffer,
+    [(data: Map<string, TagType>) => boolean],
+    (data: Map<string, TagType>) => NbtSendable
 > {
     constructor(port: number) {
-        super()
+        super(nbtRegistry)
 
         this.server = net.createServer()
         this.server.listen(port)
@@ -75,10 +78,10 @@ export class MinecraftInterface extends AbstractListenerManager<
         return encode(encoded)
     }
 
-    decode(data: Buffer) {
+    decode(data: Buffer): [any, Map<string, TagType>] {
         const parsedData = decode(data)
 
-        return nbtSendable.get(parsedData.get("channel") as string)!(parsedData)
+        return [parsedData.get("channel"), parsedData]
     }
 
     transmit(data: Buffer) {
@@ -87,6 +90,18 @@ export class MinecraftInterface extends AbstractListenerManager<
 
         this.socket?.write(lenBuf)
         this.socket?.write(data)
+    }
+
+    finalize(
+        data: Map<string, TagType>,
+        typeCheckers: [(data: Map<string, TagType>) => boolean],
+        decoder: (data: Map<string, TagType>) => NbtSendable
+    ) {
+        if (!typeCheckers[0](data)) {
+            throw new Error(`Type checking failed`)
+        }
+
+        return decoder(data)
     }
 
     private server

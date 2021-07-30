@@ -93,6 +93,25 @@ class Strategies {
     }
 
     /**
+     * Takes in an array of keys and strategies, and returns a strategy that checks if the map includes every key and passes all the strategies
+     * @param strats
+     * @returns
+     */
+    mapEach<K, V>(strats: [K, (data: any) => data is V][]) {
+        return function (data: any): data is Map<K, V> {
+            if (!(data instanceof Map)) {
+                return false
+            }
+
+            for (const [key, checker] of strats) {
+                if (!data.has(key) || !checker(data.get(key))) return false
+            }
+
+            return true
+        }
+    }
+
+    /**
      * Generates a strategy for type checking an array by applying a strategy to each element in the array
      * @param strat The strategy to apply to each element in the array
      * @returns A strategy for type checking the whole array
@@ -108,6 +127,44 @@ class Strategies {
                 if (!strat(v)) {
                     return false
                 }
+            }
+
+            return true
+        }
+    }
+
+    /**
+     * Takes in a strategy for checking the type of the keys, and a strat for checking the values, and returns a strategy ensuring the value is a map, and each key/value pair in the map passes the key and value strats
+     * @param keyStrat A strategy for checking the keys in the map
+     * @param valueStrat A strategy for checking the values in the map
+     * @returns A strategy for checking that a value is a map of the given keys and values
+     */
+    Map<K, V>(
+        keyStrat: (data: any) => data is K,
+        valueStrat: (data: any) => data is V
+    ) {
+        return function (data: any): data is Map<K, V> {
+            if (!(data instanceof Map)) return false
+
+            for (const [key, value] of data) {
+                if (!keyStrat(key) || !valueStrat(value)) return false
+            }
+
+            return true
+        }
+    }
+
+    /**
+     * Takes in a strategy for checking each value in a set and returns a strategy checking if a value is a set of the given type
+     * @param strat A strategy for checking each value in the set
+     * @returns A strategy checking if a value is a set with the given type
+     */
+    Set<V>(strat: (data: any) => data is V) {
+        return function (data: any): data is Set<V> {
+            if (!(data instanceof Set)) return false
+
+            for (const value of data) {
+                if (!strat(value)) return false
             }
 
             return true
@@ -138,7 +195,10 @@ class Strategies {
     }
 
     /**
-     * Trust that a value is always the correct type, never use except for testing or if you're using this library for threading
+     * Trust that a value is always the correct type, good for saving effort type checking stuff when there's no network or untrusted actors to mess up data
+     *
+     * Can also be used on the `channel` property for {@link Sendable}, since it's type checked by the library itself
+     *
      * @returns A strategy always returning true
      * @typeParam `T` - The type you're checking for
      */

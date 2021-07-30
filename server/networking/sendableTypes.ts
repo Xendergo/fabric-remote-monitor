@@ -2,65 +2,22 @@ import { int, TagType } from "../mc-communication/nbt"
 import {
     MakeSendable,
     Sendable,
-    TypeCheckingStrategies,
 } from "../../sendableTypes/sendableTypesHelpers"
 import { strats } from "../../sendableTypes/defaultStrategies"
 import { InputFields } from "../../sendableTypes/inputFields"
+import { Registry } from "../../sendableTypes/registry"
 
-/**
- * A class representing a class that can be sent via websockets or NBT
- */
-export abstract class NbtSendable extends Sendable {
-    /**
-     * Encode this class as an NBT compound
-     */
-    abstract encode(): Map<string, TagType>
-}
+export const websiteRegistry = new Registry<
+    Sendable,
+    [(data: any) => boolean]
+>()
 
-/**
- * All the classes that can be sent via NBT, used to find the decoder of a particular channel
- */
-export const nbtSendable: Map<
-    string,
-    (data: Map<string, TagType>) => NbtSendable
-> = new Map()
-
-/**
- *
- * @param data An NBT compound
- * @returns An object with the prototype changed to the one degsignated by the channel
- */
-export function parseNbtInput(data: Map<string, TagType>) {
-    return nbtSendable.get(data.get("channel") as string)!(data)
-}
-
-/**
- * A decorator to make a class sendable via NBT or websockets
- * @param channel The channel this class should be send through
- * @param decode A function to decode an NBT compound to the class
- */
-export function MakeNbtSendable<T extends NbtSendable>(
-    channel: string,
-    theseStrats: Omit<TypeCheckingStrategies<T>, "encode">
-) {
-    return (constructor: {
-        new (...args: any[]): T
-        channel(): string
-        decode(data: Map<string, TagType>): T
-    }) => {
-        const theseConvertedStrats = theseStrats as TypeCheckingStrategies<T>
-
-        theseConvertedStrats.encode = strats.isPrototype()
-
-        MakeSendable<T>(channel, theseConvertedStrats)(constructor)
-        nbtSendable.set(channel, constructor.decode)
-    }
-}
-
-@MakeSendable<LoginDetails>("LoginDetails", {
-    username: strats.string,
-    password: strats.string,
-})
+@MakeSendable(websiteRegistry, "LoginDetails", [
+    strats.each({
+        username: strats.string,
+        password: strats.string,
+    }),
+])
 export class LoginDetails extends Sendable {
     constructor(username: string, password: string) {
         super()
@@ -72,38 +29,14 @@ export class LoginDetails extends Sendable {
     password: string
 }
 
-@MakeNbtSendable<SignupDetails>("SignupDetails", {
-    username: strats.string,
-    password: strats.string,
-})
-export class SignupDetails extends NbtSendable {
-    constructor(username: string, password: string) {
-        super()
-        this.username = username
-        this.password = password
-    }
-
-    username: string
-    password: string
-
-    encode() {
-        return new Map(Object.entries(this))
-    }
-
-    static decode(data: Map<string, TagType>) {
-        return new SignupDetails(
-            data.get("username")! as string,
-            data.get("password")! as string
-        )
-    }
-}
-
-@MakeSendable("LoginFailed", {})
+@MakeSendable(websiteRegistry, "LoginFailed", [strats.trust()])
 export class LoginFailed extends Sendable {}
 
-@MakeSendable<LoginSuccessful>("LoginSuccessful", {
-    isAdmin: strats.boolean,
-})
+@MakeSendable(websiteRegistry, "LoginSuccessful", [
+    strats.each({
+        isAdmin: strats.boolean,
+    }),
+])
 export class LoginSuccessful extends Sendable {
     constructor(isAdmin: boolean) {
         super()
@@ -113,13 +46,24 @@ export class LoginSuccessful extends Sendable {
     isAdmin: boolean
 }
 
-@MakeNbtSendable("MirrorMessage", {
-    message: strats.string,
-    style: function (data: any): data is Style {
-        return true
-    },
-})
-export class MirrorMessage extends NbtSendable {
+@MakeSendable(websiteRegistry, "MirrorMessage", [
+    strats.each({
+        message: strats.string,
+        style: strats.each<Style>({
+            color: strats.tupleEach<[number, number, number]>([
+                strats.number,
+                strats.number,
+                strats.number,
+            ]),
+            bold: strats.boolean,
+            italic: strats.boolean,
+            underlined: strats.boolean,
+            strikethrough: strats.boolean,
+            obfuscated: strats.boolean,
+        }),
+    }),
+])
+export class MirrorMessage extends Sendable {
     constructor(message: string, style: Style) {
         super()
         this.message = message
@@ -191,10 +135,12 @@ interface Style {
 
 type PartialStyle = Partial<Style>
 
-@MakeSendable<Popup>("Popup", {
-    title: strats.string,
-    text: strats.string,
-})
+@MakeSendable(websiteRegistry, "Popup", [
+    strats.each({
+        title: strats.string,
+        text: strats.string,
+    }),
+])
 export class Popup extends Sendable {
     constructor(title: string, text: string) {
         super()
@@ -206,15 +152,17 @@ export class Popup extends Sendable {
     text
 }
 
-@MakeNbtSendable<Gamerules>("Gamerules", {
-    gamerules: strats.Array<Gamerule>(
-        strats.each<Gamerule>({
-            name: strats.string,
-            default: strats.string,
-        })
-    ),
-})
-export class Gamerules extends NbtSendable {
+@MakeSendable(websiteRegistry, "Gamerules", [
+    strats.each({
+        gamerules: strats.Array<Gamerule>(
+            strats.each<Gamerule>({
+                name: strats.string,
+                default: strats.string,
+            })
+        ),
+    }),
+])
+export class Gamerules extends Sendable {
     constructor(gamerules: Gamerule[]) {
         super()
         this.gamerules = gamerules
@@ -252,7 +200,7 @@ export class Gamerules extends NbtSendable {
     }
 }
 
-@MakeSendable("DefaultGamerules", {})
+@MakeSendable(websiteRegistry, "DefaultGamerules", [strats.trust()])
 export class DefaultGamerules extends Sendable {}
 
 export interface Gamerule {
@@ -264,11 +212,15 @@ interface DiscordInput {
     token: string | null
 }
 
-export const discordInput = new InputFields<DiscordInput>("DiscordInput", {
-    token: {
-        type: "string",
-    },
-})
+export const discordInput = new InputFields<DiscordInput>(
+    websiteRegistry,
+    "DiscordInput",
+    {
+        token: {
+            type: "string",
+        },
+    }
+)
 
 export interface ResetPassword {
     password: string
@@ -276,6 +228,7 @@ export interface ResetPassword {
 }
 
 export const resetPassword = new InputFields<ResetPassword>(
+    websiteRegistry,
     "ResetPassword",
     {
         password: {
