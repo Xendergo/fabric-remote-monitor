@@ -1,9 +1,6 @@
 import ws from "ws"
 import { connectedUsers } from ".."
-import {
-    AbstractListenerManager,
-    Sendable,
-} from "../../sendableTypes/sendableTypesHelpers"
+import { AbstractListenerManager, Sendable } from "triangulum"
 import { ConnectedUser } from "./ConnectedUser"
 import { websiteRegistry } from "./sendableTypes"
 

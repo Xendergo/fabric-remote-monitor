@@ -1,8 +1,8 @@
 import net from "net"
 import { decode, encode, TagType } from "./nbt"
-import { AbstractListenerManager } from "../../sendableTypes/sendableTypesHelpers"
+import { AbstractListenerManager } from "triangulum"
 import { logger } from ".."
-import { NbtSendable, nbtRegistry } from "../networking/sendableTypes"
+import { NbtSendable, nbtRegistry } from "./sendableTypes"
 
 export class MinecraftInterface extends AbstractListenerManager<
     NbtSendable,

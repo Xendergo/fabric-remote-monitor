@@ -2,10 +2,10 @@ import { int, TagType } from "../mc-communication/nbt"
 import {
     MakeSendable,
     Sendable,
-} from "../../sendableTypes/sendableTypesHelpers"
-import { strats } from "../../sendableTypes/defaultStrategies"
-import { InputFields } from "../../sendableTypes/inputFields"
-import { Registry } from "../../sendableTypes/registry"
+    strats,
+    Registry,
+    InputFields,
+} from "triangulum"
 
 export const websiteRegistry = new Registry<
     Sendable,

@@ -1,10 +1,6 @@
-import { strats } from "../../sendableTypes/defaultStrategies"
 import { Registry } from "../../sendableTypes/registry"
-import {
-    MakeSendableWithData,
-    Sendable,
-} from "../../sendableTypes/sendableTypesHelpers"
-import { Gamerule, MirrorMessage, Gamerules } from "../networking/sendableTypes"
+import { MakeSendableWithData, Sendable, strats } from "triangulum"
+import { MirrorMessage, Gamerules } from "../networking/sendableTypes"
 import { int, TagType } from "./nbt"
 
 export const nbtRegistry = new Registry<

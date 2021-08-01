@@ -4,10 +4,7 @@ import {
     websiteRegistry,
 } from "../../networking/sendableTypes"
 import { InputFieldsAsStores } from "./inputFieldsToStoresConverter"
-import {
-    Sendable,
-    AbstractListenerManager,
-} from "../../../sendableTypes/sendableTypesHelpers"
+import { Sendable, AbstractListenerManager } from "triangulum"
 
 export let isAdmin = false
 
