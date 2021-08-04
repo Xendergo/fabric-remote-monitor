@@ -23,6 +23,35 @@
     send(new DefaultGamerules())
 </script>
 
-{#each gamerules as gamerule}
-    {gamerule.name} - <input type="text" value={gamerule.default} /><br />
-{/each}
+<div>
+    <table>
+        {#each gamerules as gamerule}
+            <tr>
+                <th><p>{gamerule.name}</p></th>
+                <th><input type="text" value={gamerule.default} /></th>
+            </tr>
+        {/each}
+    </table>
+</div>
+
+<style>
+    p {
+        font-weight: normal;
+    }
+
+    table {
+        border-collapse: collapse;
+    }
+
+    tr + tr th {
+        border-top: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    div {
+        position: absolute;
+        left: 0;
+        width: 100vw;
+        display: flex;
+        justify-content: center;
+    }
+</style>
