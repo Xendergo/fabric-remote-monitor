@@ -1,8 +1,6 @@
 package fabric_remote_monitor;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.function.Consumer;
 
 import net.minecraft.nbt.NbtCompound;
@@ -24,7 +22,7 @@ public class ServerInterface {
             }
         }
 
-        thisThread = new SocketReaderThread(this, port, server);
+        thisThread = new SocketReaderThread(port, server);
         thisThread.start();
     }
 
@@ -32,23 +30,14 @@ public class ServerInterface {
         thisThread.Close();
     }
 
-    public void Listen(String channel, Consumer<NbtCompound> callback) {
-        listeners.computeIfAbsent(channel, key -> new HashSet<>());
-
-        listeners.get(channel).add(callback);
+    public void listen(String channel, Consumer<NbtCompound> callback) {
+        thisThread.listen(channel, callback);
     }
 
-    public void OnPacket(NbtCompound compound) {
-        String channel = compound.getString("channel");
-
-        if (!listeners.containsKey(channel)) return;
-
-        for (Consumer<NbtCompound> consumer : listeners.get(channel)) {
-            consumer.accept(compound);
-        }
+    public void sendMessage(String channel, NbtCompound data) {
+        thisThread.sendMessage(channel, data);
     }
 
     private SocketReaderThread thisThread;
-    private HashMap<String, HashSet<Consumer<NbtCompound>>> listeners = new HashMap<>();
     private int port;
 }

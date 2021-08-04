@@ -9,7 +9,7 @@ import fabric_remote_monitor.fakes.GameRulesInterface;
 import net.minecraft.world.GameRules;
 
 @Mixin(GameRules.class)
-public class GameRulesMixin implements GameRulesInterface {
+public abstract class GameRulesMixin implements GameRulesInterface {
     @Shadow
     private Map<GameRules.Key<?>, GameRules.Rule<?>> rules;
 

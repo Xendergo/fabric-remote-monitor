@@ -60,7 +60,6 @@ public class PlayerManagerMixin {
     
         compound.putInt("style", flags);
     
-        ((MinecraftServerInterface)server).getServerInterface().SendMessage("MirrorMessage", compound);
-
+        ((MinecraftServerInterface)server).getServerInterface().sendMessage("MirrorMessage", compound);
     }
 }

@@ -1,10 +1,12 @@
 package fabric_remote_monitor;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.function.Consumer;
 
 import org.apache.logging.log4j.Level;
 
@@ -15,9 +17,8 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 
 public class SocketReaderThread extends Thread {
-    SocketReaderThread(ServerInterface serverInterface, int port, MinecraftServer server) {
+    SocketReaderThread(int port, MinecraftServer server) {
         super();
-        this.serverInterface = serverInterface;
 
         this.port = port;
         this.server = server;
@@ -26,7 +27,6 @@ public class SocketReaderThread extends Thread {
     }
     
     private Socket socket;
-    private ServerInterface serverInterface;
     
     private int currentLengthIndex = 0;
     private byte[] lengthBuffer = new byte[4];
@@ -37,6 +37,8 @@ public class SocketReaderThread extends Thread {
     private int port;
 
     private MinecraftServer server;
+
+    private HashMap<String, HashSet<Consumer<NbtCompound>>> listeners = new HashMap<>();
 
     public void Close() {
         FabricRemoteMonitor.log(Level.INFO, "Closing socket");
@@ -73,13 +75,7 @@ public class SocketReaderThread extends Thread {
 
             try {
                 socket = new Socket("127.0.0.1", port);
-            } catch (ConnectException e) {
-                continue;
             } catch (IOException e) {
-                FabricRemoteMonitor.log(Level.ERROR, "Failed to connect to connect to the web server, printing stack trace: ");
-    
-                e.printStackTrace();
-
                 continue;
             }
 
@@ -100,8 +96,6 @@ public class SocketReaderThread extends Thread {
     }
 
     private void onByte(byte newByte) {
-        FabricRemoteMonitor.log(Level.INFO, ((Byte) newByte).toString());
-
         if (currentBytesLeft == 0) {
             if (currentLengthIndex != 4) {
                 lengthBuffer[currentLengthIndex] = newByte;
@@ -137,7 +131,7 @@ public class SocketReaderThread extends Thread {
 
         FabricRemoteMonitor.log(Level.INFO, compound.asString());
 
-        serverInterface.OnPacket(compound);
+        onPacket(compound);
     }
 
     public void sendMessage(String channel, NbtCompound data) {
@@ -158,5 +152,21 @@ public class SocketReaderThread extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void onPacket(NbtCompound compound) {
+        String channel = compound.getString("channel");
+
+        if (!listeners.containsKey(channel)) return;
+
+        for (Consumer<NbtCompound> consumer : listeners.get(channel)) {
+            consumer.accept(compound);
+        }
+    }
+
+    public void listen(String channel, Consumer<NbtCompound> callback) {
+        listeners.computeIfAbsent(channel, key -> new HashSet<>());
+
+        listeners.get(channel).add(callback);
     }
 }

@@ -1,5 +1,9 @@
 import { MakeSendableWithData, Sendable, strats, Registry } from "triangulum"
-import { MirrorMessage, Gamerules } from "../networking/sendableTypes"
+import {
+    MirrorMessage,
+    Gamerules,
+    ChangeGamerule,
+} from "../networking/sendableTypes"
 import { int, TagType } from "./nbt"
 
 export const nbtRegistry = new Registry<
@@ -95,3 +99,10 @@ MakeNbtSendable("MirrorMessage", [
         ],
     ]),
 ])(MirrorMessage)
+
+MakeNbtSendable("ChangeGamerule", [
+    strats.mapEach<string, TagType>([
+        ["gamerule", strats.string],
+        ["value", strats.string],
+    ]),
+])(ChangeGamerule)

@@ -10,11 +10,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import fabric_remote_monitor.fakes.MinecraftServerInterface;
+import fabric_remote_monitor.menus.Gamerules;
 import fabric_remote_monitor.util.Messages;
 
 public class FabricRemoteMonitor implements ModInitializer {
 
-    public static Logger LOGGER = LogManager.getLogger();
+    public static final Logger LOGGER = LogManager.getLogger();
 
     public static final String MOD_ID = "fabric-remote-monitor";
     public static final String MOD_NAME = "fabric-remote-monitor";
@@ -30,13 +31,15 @@ public class FabricRemoteMonitor implements ModInitializer {
 
             ServerInterface serverInterface = serverAdditions.getServerInterface();
 
-            serverInterface.Listen("MirrorMessage", (compound) -> {
+            serverInterface.listen("MirrorMessage", (compound) -> {
                 log(Level.INFO, compound.asString());
                 String text = compound.getString("message");
                 Messages.BroadcastText(server, Text.of(text));
             });
 
-            
+            serverInterface.listen("ChangeGamerule", (data) -> {
+                Gamerules.onRuleChange(data, server);
+            });
         });
 
         ServerLifecycleEvents.SERVER_STOPPING.register((MinecraftServer server) -> {

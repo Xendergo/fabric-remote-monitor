@@ -203,6 +203,40 @@ export class Gamerules extends Sendable {
 @MakeSendable(websiteRegistry, "DefaultGamerules", [strats.trust()])
 export class DefaultGamerules extends Sendable {}
 
+@MakeSendable(websiteRegistry, "ChangeGamerule", [
+    strats.each({
+        gamerule: strats.string,
+        value: strats.string,
+    }),
+])
+export class ChangeGamerule extends Sendable {
+    constructor(gamerule: string, value: string) {
+        super()
+
+        this.gamerule = gamerule
+        this.value = value
+    }
+
+    gamerule: string
+    value: string
+
+    encode() {
+        const encoded = new Map<string, TagType>()
+
+        encoded.set("gamerule", this.gamerule)
+        encoded.set("value", this.value)
+
+        return encoded
+    }
+
+    static decode(data: Map<string, TagType>) {
+        return new ChangeGamerule(
+            data.get("gamerule") as string,
+            data.get("value") as string
+        )
+    }
+}
+
 export interface Gamerule {
     name: string
     default: string

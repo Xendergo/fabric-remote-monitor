@@ -2,7 +2,12 @@
     "required": true,
     "package": "fabric_remote_monitor.mixins",
     "compatibilityLevel": "JAVA_16",
-    "mixins": ["MinecraftServerMixin", "PlayerManagerMixin", "GameRulesMixin"],
+    "mixins": [
+        "MinecraftServerMixin",
+        "PlayerManagerMixin",
+        "GameRulesMixin",
+        "RuleMixin"
+    ],
     "injectors": {
         "defaultRequire": 1
     }
