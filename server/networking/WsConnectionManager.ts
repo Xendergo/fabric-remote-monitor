@@ -1,15 +1,10 @@
 import ws from "ws"
 import { connectedUsers } from ".."
-import { AbstractListenerManager, Sendable } from "triangulum"
+import { JSONListenerManager, Sendable } from "triangulum"
 import { ConnectedUser } from "./ConnectedUser"
 import { websiteRegistry } from "./sendableTypes"
 
-export class WsConnectionManager extends AbstractListenerManager<
-    Sendable,
-    object,
-    string,
-    [(data: any) => boolean]
-> {
+export class WsConnectionManager extends JSONListenerManager {
     constructor(socket: ws, user: ConnectedUser) {
         super(websiteRegistry)
 
@@ -26,26 +21,8 @@ export class WsConnectionManager extends AbstractListenerManager<
         }
     }
 
-    protected encode(dataObj: Sendable) {
-        return JSON.stringify(dataObj)
-    }
-
-    protected decode(data: string): [any, object] {
-        let parsed = JSON.parse(data)
-
-        return [parsed.channel, parsed]
-    }
-
     protected transmit(data: string) {
         this.socket.send(data)
-    }
-
-    protected finalize(data: any, checkers: [(data: any) => boolean]) {
-        if (!checkers[0](data)) {
-            throw new Error(`Type checking failed`)
-        }
-
-        return data
     }
 
     socket: ws

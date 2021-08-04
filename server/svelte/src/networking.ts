@@ -4,7 +4,7 @@ import {
     websiteRegistry,
 } from "../../networking/sendableTypes"
 import { InputFieldsAsStores } from "./inputFieldsToStoresConverter"
-import { Sendable, AbstractListenerManager } from "triangulum"
+import { Sendable, JSONListenerManager } from "triangulum"
 
 export let isAdmin = false
 
@@ -12,12 +12,7 @@ export function setAdmin(newAdmin: boolean) {
     isAdmin = newAdmin
 }
 
-class ClientConnectionManager extends AbstractListenerManager<
-    Sendable,
-    object,
-    string,
-    [(data: any) => boolean]
-> {
+class ClientConnectionManager extends JSONListenerManager {
     constructor() {
         super(websiteRegistry)
 
@@ -32,26 +27,8 @@ class ClientConnectionManager extends AbstractListenerManager<
         }
     }
 
-    encode(dataObj: Sendable) {
-        return JSON.stringify(dataObj)
-    }
-
-    decode(data: string): [string, object] {
-        const parsed = JSON.parse(data)
-
-        return [parsed.channel, parsed]
-    }
-
     transmit(data: string) {
         this.ws.send(data)
-    }
-
-    finalize(data: object, typeCheckers: [(data: any) => boolean]) {
-        if (!typeCheckers[0](data)) {
-            throw new Error("Type checking failed")
-        }
-
-        return data as Sendable
     }
 
     ws

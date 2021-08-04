@@ -1,5 +1,4 @@
-import { Registry } from "../../sendableTypes/registry"
-import { MakeSendableWithData, Sendable, strats } from "triangulum"
+import { MakeSendableWithData, Sendable, strats, Registry } from "triangulum"
 import { MirrorMessage, Gamerules } from "../networking/sendableTypes"
 import { int, TagType } from "./nbt"
 
@@ -74,8 +73,7 @@ MakeNbtSendable("Gamerules", [
     strats.mapEach([
         [
             "gamerules",
-            strats.Map(
-                strats.string,
+            strats.Array(
                 strats.mapEach([
                     ["name", strats.string],
                     ["default", strats.string],

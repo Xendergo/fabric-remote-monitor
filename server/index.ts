@@ -11,6 +11,8 @@ import { DiscordBot } from "./discord-bot/bot"
 import { getSettings } from "./database/Settings"
 import { createLogger, format, transports } from "winston"
 import { broadcast } from "./networking/WsConnectionManager"
+import { serverStateManager } from "./server-state/server-state"
+import { MinecraftInterfaceReady } from "./server-state/serverStateMessages"
 
 if (!fs.existsSync(location)) {
     fs.mkdirSync(location, {
@@ -138,6 +140,8 @@ const server = app.listen(port)
 logger.info(`Web server running on port ${port}`)
 
 export const minecraftInterface = new MinecraftInterface(8090)
+
+serverStateManager.send(new MinecraftInterfaceReady())
 
 minecraftInterface.listen<MirrorMessage>(MirrorMessage, data => {
     broadcast(data)

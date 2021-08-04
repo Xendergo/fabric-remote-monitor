@@ -24,8 +24,6 @@ public class FabricRemoteMonitor implements ModInitializer {
         log(Level.INFO, "Initializing");
 
         ServerLifecycleEvents.SERVER_STARTED.register((MinecraftServer server) -> {
-            log(Level.INFO, "YEEEE");
-
             MinecraftServerInterface serverAdditions = (MinecraftServerInterface)server;
 
             serverAdditions.constructServerInterface(server);

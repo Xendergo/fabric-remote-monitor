@@ -322,7 +322,7 @@ class ListParser extends TagParserExtendable<TagType[]> {
         let size = 5
 
         if (id == 0) {
-            return [[], 5]
+            return [[], size]
         }
 
         let ret: TagType[] = []
@@ -389,6 +389,8 @@ class CompoundParser extends TagParserExtendable<Map<string, TagType>> {
 
             ret.set(name, value)
         }
+
+        i += 1
 
         return [ret, i]
     }

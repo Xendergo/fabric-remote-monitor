@@ -22,6 +22,5 @@ export class MirrorCommand {
         const guild = new DBGuild(msg.guild!.id)
 
         guild.setMirror(msg.channel.id)
-        console.log("bruh")
     }
 }
