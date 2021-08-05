@@ -242,6 +242,35 @@ export interface Gamerule {
     default: string
 }
 
+@MakeSendable(websiteRegistry, "Pages", [
+    strats.each({
+        pages: strats.Map(
+            strats.string,
+            strats.each({
+                title: strats.string,
+                data: strats.string,
+            })
+        ),
+    }),
+])
+export class Pages extends Sendable {
+    constructor(pages: (Page & { id: number })[]) {
+        super()
+
+        this.pages = pages.reduce((a, v) => {
+            a.set(v.id, { data: v.data, title: v.title })
+            return a
+        }, new Map())
+    }
+
+    pages: Map<number, Page>
+}
+
+export interface Page {
+    title: string
+    data: string
+}
+
 interface DiscordInput {
     token: string | null
 }

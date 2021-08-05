@@ -1,6 +1,9 @@
 import path from "path"
 import sqlite3 from "better-sqlite3"
 import { match } from "ts-pattern"
+import { serverStateManager } from "../server-state/server-state"
+import { DBReady } from "../server-state/serverStateMessages"
+import { pages } from "./Pages"
 
 const platform = process.platform
 
@@ -68,3 +71,17 @@ CREATE TABLE IF NOT EXISTS mods (
 );
 `
 ).run()
+
+db.prepare(
+    `
+CREATE TABLE IF NOT EXISTS pages (
+    id INTEGER PRIMARY KEY,
+    title TEXT NOT NULL,
+    data TEXT NOT NULL
+);
+    `
+).run()
+
+console.log(pages)
+
+serverStateManager.send(new DBReady())

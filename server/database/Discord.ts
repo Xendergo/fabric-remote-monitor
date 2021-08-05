@@ -1,11 +1,15 @@
 import { db } from "./Database"
 
-const getGuild = db.prepare("SELECT * FROM guilds WHERE id = $id")
-const addGuild = db.prepare("INSERT INTO guilds (id) VALUES ($id)")
-const setPrefix = db.prepare(
+const getGuild = db.prepare<{ id: string }>(
+    "SELECT * FROM guilds WHERE id = $id"
+)
+const addGuild = db.prepare<{ id: string }>(
+    "INSERT INTO guilds (id) VALUES ($id)"
+)
+const setPrefix = db.prepare<{ prefix: string; id: string }>(
     "UPDATE guilds SET prefix = $prefix WHERE id = $id"
 )
-const setMirror = db.prepare(
+const setMirror = db.prepare<{ mirror: string; id: string }>(
     "UPDATE guilds SET mirror = $mirror WHERE id = $id"
 )
 

@@ -45,13 +45,16 @@ The discord bot's prefix
 The channel where in game chat should be mirrored
 `mirror: integer, can be null`
 
-## Mods
+## Pages
 
-`mods`
-Data specific to each mod installed to the game
+`pages`
+Markdown for the information pages shown on the info tab
 
-The link to where the mod can be downloaded (cursforge/github)
-`source: string, not null`
+A unique id for each page
+`id: integer, primary key`
 
-The mod's file name in the mods folder
-`file: string, not null`
+The title of the page
+`title: string`
+
+The content of the page in markdown
+`data: string, not null`

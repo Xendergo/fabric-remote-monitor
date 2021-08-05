@@ -1,17 +1,22 @@
 import { db } from "./Database"
 import { getSettings } from "./Settings"
 
-const setAdmin = db.prepare(
+const setAdmin = db.prepare<{ admin: boolean; username: string }>(
     "UPDATE users SET admin = $admin WHERE username = $username"
 )
-const setPassword = db.prepare(
+const setPassword = db.prepare<{ password: string; username: string }>(
     "UPDATE users SET password = $password WHERE username = $username"
 )
-const setDiscordId = db.prepare(
+const setDiscordId = db.prepare<{ username: string; id: string }>(
     "UPDATE users SET discordId = $id WHERE username = $username"
 )
-const getUser = db.prepare("SELECT * FROM users WHERE username = $username")
-const insertUser = db.prepare(`INSERT INTO users (
+const getUser = db.prepare<{ username: string }>(
+    "SELECT * FROM users WHERE username = $username"
+)
+const insertUser = db.prepare<{
+    username: string
+    password: string
+}>(`INSERT INTO users (
     username,
     password
 ) VALUES (
