@@ -53,6 +53,9 @@ Markdown for the information pages shown on the info tab
 A unique id for each page
 `id: integer, primary key`
 
+The order in which the pages should be shown in the tabs
+`ordinal: integer, not null`
+
 The title of the page
 `title: string`
 

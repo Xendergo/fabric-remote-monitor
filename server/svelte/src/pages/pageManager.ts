@@ -37,8 +37,6 @@ export function registerPage(
             visible,
         })
 
-        console.log(v)
-
         return v
     })
 }

@@ -76,6 +76,7 @@ db.prepare(
     `
 CREATE TABLE IF NOT EXISTS pages (
     id INTEGER PRIMARY KEY,
+    ordinal INTEGER NOT NULL,
     title TEXT NOT NULL,
     data TEXT NOT NULL
 );

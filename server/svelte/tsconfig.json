@@ -3,7 +3,7 @@
     "compilerOptions": {
         "target": "esnext",
         "module": "esnext",
-        "esModuleInterop": false, // maybe change to true when ur feeling adventerous
+        "esModuleInterop": true, // maybe change to true when ur feeling adventerous
         "resolveJsonModule": true,
         "baseUrl": ".",
         /**

@@ -244,11 +244,12 @@ export interface Gamerule {
 
 @MakeSendable(websiteRegistry, "Pages", [
     strats.each({
-        pages: strats.Map(
-            strats.string,
+        pages: strats.Array(
             strats.each({
                 title: strats.string,
                 data: strats.string,
+                ordinal: strats.number,
+                id: strats.number,
             })
         ),
     }),
@@ -257,18 +258,26 @@ export class Pages extends Sendable {
     constructor(pages: (Page & { id: number })[]) {
         super()
 
-        this.pages = pages.reduce((a, v) => {
-            a.set(v.id, { data: v.data, title: v.title })
+        this.pages = pages
+    }
+
+    pages: (Page & { id: number })[]
+
+    getPages(): Map<number, Page> {
+        return this.pages.reduce((a, v) => {
+            a.set(v.id, { data: v.data, title: v.title, ordinal: v.ordinal })
             return a
         }, new Map())
     }
-
-    pages: Map<number, Page>
 }
+
+@MakeSendable(websiteRegistry, "CurrentPages", [strats.trust()])
+export class CurrentPages extends Sendable {}
 
 export interface Page {
     title: string
     data: string
+    ordinal: number
 }
 
 interface DiscordInput {
