@@ -1,22 +1,48 @@
-import { writable, Readable } from "svelte/store"
+import { writable, Readable, Writable } from "svelte/store"
 
-export enum Pages {
-    Login,
-    Home,
-    Discord,
-    Account,
-    Gamerules,
+interface RegisteredPage {
+    name: string
+    component: any
+    adminOnly: boolean
+    visible: boolean
 }
 
-export const pages: Pages[] = [Pages.Home, Pages.Account]
-export const adminPages: Pages[] = [Pages.Discord, Pages.Gamerules]
+const writablePages: Writable<RegisteredPage[]> = writable([])
 
-const { subscribe, set } = writable<Pages>(Pages.Login)
+export const pages: Readable<RegisteredPage[]> = {
+    subscribe: writablePages.subscribe,
+}
 
-export const page: Readable<Pages> = {
+const { subscribe, set } = writable<number>(0)
+
+export const page: Readable<number> = {
     subscribe,
 }
 
-export function changePage(newPage: Pages) {
+export function changePage(newPage: number) {
     set(newPage)
+}
+
+export function registerPage(
+    name: string,
+    component: any,
+    adminOnly: boolean,
+    visible: boolean = true
+) {
+    writablePages.update(v => {
+        v.push({
+            name,
+            component,
+            adminOnly,
+            visible,
+        })
+
+        console.log(v)
+
+        return v
+    })
+}
+
+export function unregisterAll() {
+    writablePages.set([])
 }

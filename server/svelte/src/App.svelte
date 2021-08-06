@@ -2,13 +2,26 @@
     import Login from "./pages/Login.svelte"
     import Home from "./pages/Home.svelte"
     import Discord from "./pages/Discord.svelte"
-    import { page, Pages } from "./pages/pageManager"
+    import {
+        pages,
+        page,
+        registerPage,
+        unregisterAll,
+    } from "./pages/pageManager"
     import Tabs from "./components/Tabs.svelte"
     import { fade } from "svelte/transition"
     import Account from "./pages/Account.svelte"
     import { popups } from "./popupManager"
     import Popup from "./components/Popup.svelte"
     import Gamerules from "./pages/Gamerules.svelte"
+
+    unregisterAll()
+
+    registerPage("Login", Login, false, false)
+    registerPage("Home", Home, false)
+    registerPage("Account", Account, true)
+    registerPage("Discord", Discord, true)
+    registerPage("Gamerules", Gamerules, true)
 
     const conf = {
         duration: 200,
@@ -20,27 +33,18 @@
         <Popup title={$popups[0].title} text={$popups[0].text} />
     {/if}
     <Tabs />
-    {#if $page == Pages.Login}
-        <div in:fade={conf} out:fade={conf} class="login">
-            <Login />
-        </div>
-    {:else if $page == Pages.Home}
-        <div in:fade={conf} out:fade={conf}>
-            <Home />
-        </div>
-    {:else if $page == Pages.Discord}
-        <div in:fade={conf} out:fade={conf}>
-            <Discord />
-        </div>
-    {:else if $page == Pages.Account}
-        <div in:fade={conf} out:fade={conf}>
-            <Account />
-        </div>
-    {:else if $page == Pages.Gamerules}
-        <div in:fade={conf} out:fade={conf}>
-            <Gamerules />
-        </div>
-    {/if}
+
+    {#each $pages as RegisteredPage, i}
+        {#if i === $page}
+            <div
+                in:fade={conf}
+                out:fade={conf}
+                class:notVisible={!RegisteredPage.visible}
+            >
+                <RegisteredPage.component />
+            </div>
+        {/if}
+    {/each}
 </main>
 
 <style>
@@ -68,7 +72,7 @@
         left: 8px;
     }
 
-    .login {
+    .notVisible {
         top: 0;
         left: 0;
     }

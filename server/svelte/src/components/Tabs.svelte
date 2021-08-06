@@ -2,25 +2,25 @@
     import { isAdmin } from "../networking"
 
     import {
-        adminPages,
         changePage,
         page as currentPage,
-        Pages,
         pages,
     } from "../pages/pageManager"
 </script>
 
 <div class="box">
-    {#each isAdmin ? pages.concat(adminPages) : pages as page}
-        <div
-            class="tab"
-            class:currentPage={page == $currentPage}
-            on:click={() => changePage(page)}
-        >
-            <p class:toDropShadow={page == $currentPage}>
-                {Pages[page]}
-            </p>
-        </div>
+    {#each $pages as page, i}
+        {#if page.visible && (!page.adminOnly || isAdmin)}
+            <div
+                class="tab"
+                class:currentPage={i == $currentPage}
+                on:click={() => changePage(i)}
+            >
+                <p class:toDropShadow={i == $currentPage}>
+                    {page.name}
+                </p>
+            </div>
+        {/if}
     {/each}
 </div>
 

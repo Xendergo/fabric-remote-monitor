@@ -6,7 +6,7 @@
         LoginSuccessful,
     } from "../../../networking/sendableTypes"
     import { onDestroy } from "svelte"
-    import { changePage, Pages } from "./pageManager"
+    import { changePage } from "./pageManager"
 
     let username: string = ""
     let password: string = ""
@@ -23,7 +23,7 @@
 
     function loginSuccessful(data: LoginSuccessful) {
         setAdmin(data.isAdmin)
-        changePage(Pages.Home)
+        changePage(1)
     }
 
     listen(LoginFailed, loginFailed)
