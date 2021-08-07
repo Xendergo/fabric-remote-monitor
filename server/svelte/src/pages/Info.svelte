@@ -47,7 +47,7 @@
             Your server's admins haven't put anything on this page
         {/if}
     {:else if pages.has(currentPage)}
-        <div in:fade={conf} out:fade={conf}>
+        <div in:fade={conf} out:fade={conf} class="markdown">
             {@html DOMPurify.sanitize(
                 marked((pages.get(currentPage) ?? { data: "" }).data)
             )}

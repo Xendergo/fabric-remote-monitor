@@ -9,7 +9,7 @@
 
     let message: string
 
-    function sendMessage(e) {
+    function sendMessage(e: KeyboardEvent) {
         if (e.key !== "Enter") return
 
         send<MirrorMessage>(new MirrorMessage(message, newStyle({})))

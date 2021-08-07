@@ -15,12 +15,14 @@
     import Popup from "./components/Popup.svelte"
     import Gamerules from "./pages/Gamerules.svelte"
     import Info from "./pages/Info.svelte"
+    import InfoEditor from "./pages/InfoEditor.svelte"
 
     unregisterAll()
 
     registerPage("Login", Login, false, false)
     registerPage("Home", Home, false)
     registerPage("Info", Info, false)
+    registerPage("Info Editor", InfoEditor, true)
     registerPage("Account", Account, true)
     registerPage("Discord", Discord, true)
     registerPage("Gamerules", Gamerules, true)
@@ -57,6 +59,10 @@
         background-color: black;
         color: white;
         font-size: 1.4rem;
+    }
+
+    :global(.markdown *) {
+        font-size: revert;
     }
 
     main {
