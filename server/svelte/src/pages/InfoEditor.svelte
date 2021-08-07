@@ -1,6 +1,10 @@
 <script lang="ts">
     import { listen, send, stopListening } from "../networking"
-    import { CurrentPages, Pages } from "../../../networking/sendableTypes"
+    import {
+        CurrentPages,
+        DeletePage,
+        Pages,
+    } from "../../../networking/sendableTypes"
     import type { Page } from "../../../networking/sendableTypes"
     import { hasContext, onDestroy } from "svelte"
     import CodeEditor from "../components/CodeEditor.svelte"
@@ -64,6 +68,22 @@
                 >
                     {page.title}
                 </p>
+                <button
+                    alt="Delete page"
+                    on:click={() => {
+                        if (
+                            confirm(
+                                "Are you sure you want to delete this page?"
+                            )
+                        ) {
+                            pages.delete(key)
+
+                            send(new DeletePage(key))
+
+                            pages = pages
+                        }
+                    }}><span class="shrink-text">🗑️</span></button
+                >
             {/each}
         </div>
         <button
@@ -82,7 +102,8 @@
                 })
 
                 pages = pages
-            }}><span>+</span></button
+            }}
+            alt="New page"><span>+</span></button
         >
     </div>
 
@@ -136,6 +157,7 @@
 
     #tabs-flex {
         grid-template-rows: repeat(auto-fill, calc(1.4rem + 16px));
+        grid-template-columns: auto auto;
         display: inline grid;
         flex: 1;
     }
@@ -144,6 +166,10 @@
         margin-right: 32px;
         flex: 1;
         height: calc(92vh - 16px);
+    }
+
+    .shrink-text {
+        font-size: 0.9rem;
     }
 
     .markdown {

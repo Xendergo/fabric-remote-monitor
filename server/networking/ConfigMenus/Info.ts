@@ -1,5 +1,5 @@
-import { CurrentPages, Pages } from "../sendableTypes"
-import { pages, updatePage } from "../../database/Pages"
+import { CurrentPages, Pages, DeletePage } from "../sendableTypes"
+import { pages, updatePage, deletePage } from "../../database/Pages"
 import { WsConnectionManager } from "../WsConnectionManager"
 
 export function infoListeners(user: WsConnectionManager) {
@@ -13,5 +13,9 @@ export function infoEditorListeners(user: WsConnectionManager) {
         data.pages.forEach(page => {
             updatePage(page.id, page.data, page.title, page.ordinal)
         })
+    })
+
+    user.listen(DeletePage, data => {
+        deletePage(data.id)
     })
 }

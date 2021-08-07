@@ -15,12 +15,16 @@ let addPageStatement: Statement<{
     data: string
     ordinal: number
 }>
-let getPages: Statement<any[]>
+let deletePageStatement: Statement<{
+    id: number
+}>
+let getPagesStatement: Statement<any[]>
 
 export let pages: Pages
 
 serverStateManager.listen(DBReady, data => {
-    getPages = db.prepare("SELECT * FROM pages")
+    getPagesStatement = db.prepare("SELECT * FROM pages")
+
     updatePageStatement = db.prepare(
         `UPDATE pages
          SET data = $data, title = $title, ordinal = $ordinal
@@ -31,7 +35,9 @@ serverStateManager.listen(DBReady, data => {
         "INSERT INTO pages (title, data, ordinal) VALUES ($title, $data, $ordinal)"
     )
 
-    pages = new Pages(getPages.all())
+    deletePageStatement = db.prepare("DELETE FROM pages WHERE id = $id")
+
+    pages = new Pages(getPagesStatement.all())
 })
 
 export function updatePage(
@@ -62,6 +68,11 @@ export function updatePage(
             ordinal,
         })
 
-        pages = new Pages(getPages.all())
+        pages = new Pages(getPagesStatement.all())
     }
+}
+
+export function deletePage(id: number) {
+    deletePageStatement.run({ id })
+    pages.pages = pages.pages.filter(v => v.id !== id)
 }
