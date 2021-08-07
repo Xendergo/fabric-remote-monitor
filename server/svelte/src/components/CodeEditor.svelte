@@ -20,12 +20,15 @@
 
     export let text = ""
 
+    $: {
+        if (code !== undefined) {
+            onValueChange()
+            text
+        }
+    }
+
     let code: HTMLElement
     let textarea: HTMLTextAreaElement
-
-    onMount(() => {
-        onValueChange()
-    })
 
     function syncScroll() {
         code.scrollTop = textarea.scrollTop

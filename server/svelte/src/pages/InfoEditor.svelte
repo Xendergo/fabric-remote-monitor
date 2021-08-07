@@ -2,7 +2,7 @@
     import { listen, send, stopListening } from "../networking"
     import { CurrentPages, Pages } from "../../../networking/sendableTypes"
     import type { Page } from "../../../networking/sendableTypes"
-    import { onDestroy } from "svelte"
+    import { hasContext, onDestroy } from "svelte"
     import CodeEditor from "../components/CodeEditor.svelte"
     import DOMPurify from "dompurify"
     import marked from "marked"
@@ -54,45 +54,64 @@
 
 <div class="container">
     <div class="tabs">
-        {#each Array.from(pages.entries()).sort((a, b) => a[1].ordinal - b[1].ordinal) as [key, page]}
-            <p
-                on:click={() => {
-                    currentPage = key
-                }}
-                class:selected={currentPage === key}
-            >
-                {page.title}
-            </p>
-        {/each}
+        <div id="tabs-flex">
+            {#each Array.from(pages.entries()).sort((a, b) => a[1].ordinal - b[1].ordinal) as [key, page]}
+                <p
+                    on:click={() => {
+                        currentPage = key
+                    }}
+                    class:selected={currentPage === key}
+                >
+                    {page.title}
+                </p>
+            {/each}
+        </div>
+        <button
+            id="newButton"
+            on:click={() => {
+                for (var i = 0; pages.has(i); i++) {}
+
+                const ordinal = Math.max(
+                    ...Array.from(pages.values()).map(v => v.ordinal)
+                )
+
+                pages.set(i, {
+                    ordinal: ordinal,
+                    data: "",
+                    title: "New Page",
+                })
+
+                pages = pages
+            }}><span>+</span></button
+        >
     </div>
 
     {#if currentPage !== null && pages.has(currentPage)}
-        <div class="editor">
-            <div class="editorContainer">
-                <CodeEditor
-                    bind:text
-                    language="markdown"
-                    onChange={newText => {
-                        if (currentPage === null) return
+        <div class="editorContainer">
+            <CodeEditor
+                bind:text
+                language="markdown"
+                onChange={newText => {
+                    if (currentPage === null) return
 
-                        const page = pages.get(currentPage)
+                    const page = pages.get(currentPage)
 
-                        if (!page) return
+                    if (!page) return
 
-                        page.data = newText
+                    page.data = newText
 
-                        pages.set(currentPage, page)
-                    }}
-                />
-                <a
-                    href="https://www.markdownguide.org/cheat-sheet/"
-                    alt="How to use markdown"
-                    target="_blank">?</a
-                >
-            </div>
-            <div class="markdown">
-                {@html DOMPurify.sanitize(marked(text))}
-            </div>
+                    pages.set(currentPage, page)
+                }}
+            />
+            <a
+                href="https://www.markdownguide.org/cheat-sheet/"
+                alt="How to use markdown"
+                target="_blank"
+                id="questionButton">?</a
+            >
+        </div>
+        <div class="markdown">
+            {@html DOMPurify.sanitize(marked(text))}
         </div>
     {/if}
 </div>
@@ -107,23 +126,28 @@
     }
 
     .tabs {
-        display: inline grid;
+        display: flex;
+        flex-direction: column;
         border: 2px solid white;
         border-radius: 4px;
         margin-right: 16px;
-        /* padding: 8px; */
-        grid-template-rows: repeat(auto-fill, calc(1.4rem + 16px));
+        flex: initial;
     }
 
-    .editor {
-        width: 100%;
-        display: flex;
+    #tabs-flex {
+        grid-template-rows: repeat(auto-fill, calc(1.4rem + 16px));
+        display: inline grid;
+        flex: 1;
     }
 
     .editorContainer {
         margin-right: 32px;
-        width: 50%;
+        flex: 1;
         height: calc(92vh - 16px);
+    }
+
+    .markdown {
+        flex: 1;
     }
 
     .selected {
@@ -140,11 +164,23 @@
         cursor: pointer;
     }
 
-    a {
+    #questionButton {
         float: inline-end;
-        position: relative;
         top: -1.6rem;
         left: 0.3rem;
+    }
+
+    #newButton {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 16px;
+        flex: initial;
+    }
+
+    a,
+    button {
+        position: relative;
         text-decoration: none;
         border: 2px solid white;
         border-radius: 50%;
@@ -152,5 +188,15 @@
         width: 1.7rem;
         text-align: center;
         z-index: 100;
+    }
+
+    button span {
+        display: block;
+        height: 100%;
+        width: 100%;
+        text-align: center;
+        padding: 0;
+        line-height: 0.7rem;
+        background-color: transparent;
     }
 </style>

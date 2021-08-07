@@ -55,8 +55,6 @@ export function updatePage(
         page.data = data
         page.title = title
         page.ordinal = ordinal
-
-        console.log(page, pages)
     } else {
         addPageStatement.run({
             data,

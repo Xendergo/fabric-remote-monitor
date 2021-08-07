@@ -35,6 +35,7 @@
                 on:click={() => {
                     currentPage = key
                 }}
+                class:selected={currentPage === key}
             >
                 {page.title}
             </p>
@@ -74,9 +75,14 @@
 
     p {
         margin: 0;
+        background-color: transparent;
     }
 
     p:hover {
         cursor: pointer;
+    }
+
+    .selected {
+        filter: drop-shadow(2px 2px 4px #ff009d);
     }
 </style>
