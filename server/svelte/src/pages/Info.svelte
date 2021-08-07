@@ -13,7 +13,6 @@
 
     function onPages(newPages: Pages) {
         pages = newPages.getPages()
-        console.log(pages)
     }
 
     listen(Pages, onPages)

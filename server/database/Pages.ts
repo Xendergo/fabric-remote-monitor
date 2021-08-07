@@ -4,23 +4,66 @@ import { serverStateManager } from "../server-state/server-state"
 import { DBReady } from "../server-state/serverStateMessages"
 import { db } from "./Database"
 
-let setPageData: Statement<{ data: string; id: number }>
-let setPageTitle: Statement<{ title: string; id: number }>
-let setPageOrdinal: Statement<{ ordinal: number; id: number }>
-let addPage: Statement<{ title: string; data: string; ordinal: number }>
+let updatePageStatement: Statement<{
+    data: string
+    title: string
+    ordinal: number
+    id: number
+}>
+let addPageStatement: Statement<{
+    title: string
+    data: string
+    ordinal: number
+}>
+let getPages: Statement<any[]>
 
 export let pages: Pages
 
 serverStateManager.listen(DBReady, data => {
-    const getPages = db.prepare("SELECT * FROM pages")
-    setPageData = db.prepare("UPDATE pages SET data = $data WHERE id = $id")
-    setPageTitle = db.prepare("UPDATE pages SET title = $title WHERE id = $id")
-    setPageOrdinal = db.prepare(
-        "UPDATE pages SET ordinal = $ordinal WHERE id = $id"
+    getPages = db.prepare("SELECT * FROM pages")
+    updatePageStatement = db.prepare(
+        `UPDATE pages
+         SET data = $data, title = $title, ordinal = $ordinal
+         WHERE id = $id`
     )
-    addPage = db.prepare(
+
+    addPageStatement = db.prepare(
         "INSERT INTO pages (title, data, ordinal) VALUES ($title, $data, $ordinal)"
     )
 
     pages = new Pages(getPages.all())
 })
+
+export function updatePage(
+    id: number,
+    data: string,
+    title: string,
+    ordinal: number
+) {
+    const pagesMap = pages.getPages()
+
+    if (pagesMap.has(id)) {
+        updatePageStatement.run({
+            id,
+            data,
+            title,
+            ordinal,
+        })
+
+        const page = pagesMap.get(id)!
+
+        page.data = data
+        page.title = title
+        page.ordinal = ordinal
+
+        console.log(page, pages)
+    } else {
+        addPageStatement.run({
+            data,
+            title,
+            ordinal,
+        })
+
+        pages = new Pages(getPages.all())
+    }
+}

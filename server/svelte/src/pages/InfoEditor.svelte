@@ -13,12 +13,32 @@
 
     function onPages(newPages: Pages) {
         pages = newPages.getPages()
+
+        stopListening(Pages, onPages)
     }
 
     listen(Pages, onPages)
 
     onDestroy(() => {
         stopListening(Pages, onPages)
+
+        send(
+            new Pages(
+                Array.from(pages.entries()).reduce<(Page & { id: number })[]>(
+                    (a, v) => {
+                        a.push({
+                            id: v[0],
+                            title: v[1].title,
+                            data: v[1].data,
+                            ordinal: v[1].ordinal,
+                        })
+
+                        return a
+                    },
+                    []
+                )
+            )
+        )
     })
 
     let currentPage: number | null = null
@@ -49,7 +69,21 @@
     {#if currentPage !== null && pages.has(currentPage)}
         <div class="editor">
             <div class="editorContainer">
-                <CodeEditor bind:text language="markdown" />
+                <CodeEditor
+                    bind:text
+                    language="markdown"
+                    onChange={newText => {
+                        if (currentPage === null) return
+
+                        const page = pages.get(currentPage)
+
+                        if (!page) return
+
+                        page.data = newText
+
+                        pages.set(currentPage, page)
+                    }}
+                />
                 <a
                     href="https://www.markdownguide.org/cheat-sheet/"
                     alt="How to use markdown"

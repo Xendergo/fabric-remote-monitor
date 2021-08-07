@@ -16,6 +16,7 @@
 
     export let language: string | undefined | null
     export let spellcheck = false
+    export let onChange: (newText: string) => void = () => {}
 
     export let text = ""
 
@@ -32,6 +33,8 @@
     }
 
     function onValueChange() {
+        onChange(text)
+
         const newText = text.replaceAll("&", "&amp;").replaceAll("<", "&lt;")
 
         code.innerHTML = newText.replaceAll(/\r{0}\n/g, "\r\n")

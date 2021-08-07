@@ -12,7 +12,7 @@ import { discordListeners } from "./ConfigMenus/Discord"
 import { accountListeners } from "./ConfigMenus/Account"
 import { discordBot } from "../index"
 import { gamerulesListeners } from "./ConfigMenus/Gamerules"
-import { infoListeners } from "./ConfigMenus/Info"
+import { infoEditorListeners, infoListeners } from "./ConfigMenus/Info"
 
 export class ConnectedUser {
     constructor(socket: ws) {
@@ -66,6 +66,7 @@ export class ConnectedUser {
     private listenAdminOnly() {
         discordListeners(this.connectionManager)
         gamerulesListeners(this.connectionManager)
+        infoEditorListeners(this.connectionManager)
     }
 
     socket: ws

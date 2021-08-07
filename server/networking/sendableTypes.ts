@@ -265,7 +265,7 @@ export class Pages extends Sendable {
 
     getPages(): Map<number, Page> {
         return this.pages.reduce((a, v) => {
-            a.set(v.id, { data: v.data, title: v.title, ordinal: v.ordinal })
+            a.set(v.id, v)
             return a
         }, new Map())
     }
