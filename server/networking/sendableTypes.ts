@@ -274,20 +274,6 @@ export class Pages extends Sendable {
 @MakeSendable(websiteRegistry, "CurrentPages", [strats.trust()])
 export class CurrentPages extends Sendable {}
 
-@MakeSendable(websiteRegistry, "DeletePage", [
-    strats.each({
-        id: strats.number,
-    }),
-])
-export class DeletePage extends Sendable {
-    constructor(id: number) {
-        super()
-        this.id = id
-    }
-
-    id: number
-}
-
 export interface Page {
     title: string
     data: string

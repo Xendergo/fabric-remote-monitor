@@ -15,9 +15,7 @@ let addPageStatement: Statement<{
     data: string
     ordinal: number
 }>
-let deletePageStatement: Statement<{
-    id: number
-}>
+let deletePagesStatement: Statement<any[]>
 let getPagesStatement: Statement<any[]>
 
 export let pages: Pages
@@ -35,44 +33,21 @@ serverStateManager.listen(DBReady, data => {
         "INSERT INTO pages (title, data, ordinal) VALUES ($title, $data, $ordinal)"
     )
 
-    deletePageStatement = db.prepare("DELETE FROM pages WHERE id = $id")
+    deletePagesStatement = db.prepare("DELETE FROM pages")
 
     pages = new Pages(getPagesStatement.all())
 })
 
-export function updatePage(
-    id: number,
-    data: string,
-    title: string,
-    ordinal: number
-) {
-    const pagesMap = pages.getPages()
+export function updatePages(newPages: Pages) {
+    deletePagesStatement.run()
 
-    if (pagesMap.has(id)) {
-        updatePageStatement.run({
-            id,
-            data,
-            title,
-            ordinal,
-        })
-
-        const page = pagesMap.get(id)!
-
-        page.data = data
-        page.title = title
-        page.ordinal = ordinal
-    } else {
+    for (const page of newPages.pages) {
         addPageStatement.run({
-            data,
-            title,
-            ordinal,
+            data: page.data,
+            title: page.title,
+            ordinal: page.ordinal,
         })
-
-        pages = new Pages(getPagesStatement.all())
     }
-}
 
-export function deletePage(id: number) {
-    deletePageStatement.run({ id })
-    pages.pages = pages.pages.filter(v => v.id !== id)
+    pages = newPages
 }

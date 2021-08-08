@@ -1,10 +1,6 @@
 <script lang="ts">
     import { listen, send, stopListening } from "../networking"
-    import {
-        CurrentPages,
-        DeletePage,
-        Pages,
-    } from "../../../networking/sendableTypes"
+    import { CurrentPages, Pages } from "../../../networking/sendableTypes"
     import type { Page } from "../../../networking/sendableTypes"
     import { hasContext, onDestroy } from "svelte"
     import CodeEditor from "../components/CodeEditor.svelte"
@@ -59,18 +55,54 @@
         currentName = page.title
     }
 
-    function updatePage(callback: (page: Page) => Page) {
-        if (currentPage === null) return
+    function updatePage(
+        callback: (page: Page) => Page,
+        pageId: number | null = currentPage
+    ) {
+        if (pageId === null) return
 
-        const page = pages.get(currentPage)
+        const page = pages.get(pageId)
 
         if (!page) return
 
         const updatedPage = callback(page)
 
-        pages.set(currentPage, updatedPage)
+        pages.set(pageId, updatedPage)
 
         pages = pages
+    }
+
+    function movePage(key: number, direction: 1 | -1) {
+        const sortedPages = Array.from(pages.entries())
+            .map(([key, value]) => {
+                return {
+                    id: key,
+                    data: value.data,
+                    ordinal: value.ordinal,
+                    title: value.title,
+                }
+            })
+            .sort((a, b) => a.ordinal - b.ordinal)
+
+        const index = sortedPages.findIndex(v => v.id === key)
+
+        if (0 > index + direction || index + direction > sortedPages.length - 1)
+            return
+
+        const newOrdinal = sortedPages[index + direction].ordinal
+        const swappedOrdinal = sortedPages[index].ordinal
+
+        console.log(newOrdinal, swappedOrdinal)
+
+        updatePage(page => {
+            page.ordinal = newOrdinal
+            return page
+        }, sortedPages[index].id)
+
+        updatePage(page => {
+            page.ordinal = swappedOrdinal
+            return page
+        }, sortedPages[index + direction].id)
     }
 </script>
 
@@ -87,6 +119,18 @@
                     {page.title}
                 </p>
                 <button
+                    alt="Move page up"
+                    on:click={() => {
+                        movePage(key, -1)
+                    }}><span class="shrink-text">⬆️</span></button
+                >
+                <button
+                    alt="Move page down"
+                    on:click={() => {
+                        movePage(key, 1)
+                    }}><span class="shrink-text">⬇️</span></button
+                >
+                <button
                     alt="Delete page"
                     on:click={() => {
                         if (
@@ -95,8 +139,6 @@
                             )
                         ) {
                             pages.delete(key)
-
-                            send(new DeletePage(key))
 
                             pages = pages
                         }
@@ -109,9 +151,11 @@
             on:click={() => {
                 for (var i = 0; pages.has(i); i++) {}
 
-                const ordinal = Math.max(
-                    ...Array.from(pages.values()).map(v => v.ordinal)
-                )
+                const ordinal =
+                    Math.max(
+                        0,
+                        ...Array.from(pages.values()).map(v => v.ordinal)
+                    ) + 1
 
                 pages.set(i, {
                     ordinal: ordinal,
@@ -182,7 +226,7 @@
 
     #tabs-flex {
         grid-template-rows: repeat(auto-fill, calc(1.4rem + 16px));
-        grid-template-columns: auto auto;
+        grid-template-columns: auto auto auto auto;
         display: inline grid;
         flex: 1;
     }
@@ -207,7 +251,7 @@
     }
 
     .shrink-text {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
     }
 
     .markdown {
