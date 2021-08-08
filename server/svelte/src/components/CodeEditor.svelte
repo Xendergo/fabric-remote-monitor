@@ -73,13 +73,13 @@
         font-size: 1rem;
 
         padding: 8px;
-        width: 100%;
-        height: 100%;
+        width: calc(100% - 20px);
+        height: calc(100% - 20px);
         display: block;
         position: absolute;
         top: 0;
         left: 0;
-        border-radius: 4px;
+        border-radius: 8px;
         line-height: 1rem;
 
         overflow: auto;
@@ -116,6 +116,8 @@
         color: transparent;
         background: transparent;
         caret-color: white;
+
+        resize: none;
     }
 
     .container {

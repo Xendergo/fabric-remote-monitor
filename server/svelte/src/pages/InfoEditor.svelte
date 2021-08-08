@@ -51,8 +51,26 @@
 
     $: updateText(currentPage ?? -1)
 
+    let currentName = ""
+
     function updateText(currentPage: number) {
-        text = (pages.get(currentPage ?? -1) ?? { data: "" }).data
+        const page = pages.get(currentPage ?? -1) ?? { data: "", title: "" }
+        text = page.data
+        currentName = page.title
+    }
+
+    function updatePage(callback: (page: Page) => Page) {
+        if (currentPage === null) return
+
+        const page = pages.get(currentPage)
+
+        if (!page) return
+
+        const updatedPage = callback(page)
+
+        pages.set(currentPage, updatedPage)
+
+        pages = pages
     }
 </script>
 
@@ -109,27 +127,34 @@
 
     {#if currentPage !== null && pages.has(currentPage)}
         <div class="editorContainer">
-            <CodeEditor
-                bind:text
-                language="markdown"
-                onChange={newText => {
-                    if (currentPage === null) return
-
-                    const page = pages.get(currentPage)
-
-                    if (!page) return
-
-                    page.data = newText
-
-                    pages.set(currentPage, page)
+            <input
+                id="name-changer"
+                bind:value={currentName}
+                on:input={() => {
+                    updatePage(page => {
+                        page.title = currentName
+                        return page
+                    })
                 }}
             />
-            <a
-                href="https://www.markdownguide.org/cheat-sheet/"
-                alt="How to use markdown"
-                target="_blank"
-                id="questionButton">?</a
-            >
+            <div id="codeEditorContainer">
+                <CodeEditor
+                    bind:text
+                    language="markdown"
+                    onChange={newText => {
+                        updatePage(page => {
+                            page.data = newText
+                            return page
+                        })
+                    }}
+                />
+                <a
+                    href="https://www.markdownguide.org/cheat-sheet/"
+                    alt="How to use markdown"
+                    target="_blank"
+                    id="questionButton">?</a
+                >
+            </div>
         </div>
         <div class="markdown">
             {@html DOMPurify.sanitize(marked(text))}
@@ -165,7 +190,20 @@
     .editorContainer {
         margin-right: 32px;
         flex: 1;
-        height: calc(92vh - 16px);
+        height: calc(94vh - 16px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    #codeEditorContainer {
+        flex: 1;
+    }
+
+    #name-changer {
+        width: calc(100% - 20px);
+        margin: 0;
+        margin-bottom: 8px;
+        flex: initial;
     }
 
     .shrink-text {
@@ -192,8 +230,8 @@
 
     #questionButton {
         float: inline-end;
-        top: -1.6rem;
-        left: 0.3rem;
+        top: -2.5rem;
+        left: -0.7rem;
     }
 
     #newButton {
