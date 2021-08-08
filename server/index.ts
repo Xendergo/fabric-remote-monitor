@@ -1,18 +1,17 @@
 import express from "express"
 import { MinecraftInterface } from "./mc-communication/minecraft-interface"
 import ws from "ws"
-import { location } from "./database/Database"
 import fs from "fs"
 import path from "path"
 import { pki } from "node-forge"
 import { ConnectedUser } from "./networking/ConnectedUser"
 import { MirrorMessage } from "./networking/sendableTypes"
 import { DiscordBot } from "./discord-bot/bot"
-import { getSettings } from "./database/Settings"
 import { createLogger, format, transports } from "winston"
 import { broadcast } from "./networking/WsConnectionManager"
 import { serverStateManager } from "./server-state/server-state"
 import { MinecraftInterfaceReady } from "./server-state/serverStateMessages"
+import { database, location } from "./database/DatabaseManager"
 
 if (!fs.existsSync(location)) {
     fs.mkdirSync(location, {
@@ -170,13 +169,13 @@ export function destroyDiscordBot() {
 }
 
 export function createDiscordBot() {
-    const token = getSettings().discordToken
+    const token = database.getSettings().discordToken
 
     if (token == null) return
 
     discordBot = new DiscordBot()
 }
 
-if (getSettings().discordToken != null) {
+if (database.getSettings().discordToken != null) {
     createDiscordBot()
 }

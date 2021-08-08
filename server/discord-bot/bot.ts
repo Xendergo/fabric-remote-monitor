@@ -1,12 +1,12 @@
 import { Client } from "discord.js"
 import { logger, minecraftInterface } from "../index"
-import { getSettings } from "../database/Settings"
 import { onDirectMessage } from "./connectAccount"
 import { DBGuild } from "../database/Discord"
 import { commands } from "./commandHelpers"
-import { PrefixCommand, MirrorCommand } from "./commands"
+import { PrefixCommand } from "./commands"
 import { MirrorMessage, newStyle } from "../networking/sendableTypes"
 import { broadcast } from "../networking/WsConnectionManager"
+import { database } from "../database/DatabaseManager"
 console.log(PrefixCommand)
 
 export class DiscordBot {
@@ -62,7 +62,7 @@ export class DiscordBot {
 
     private async login() {
         try {
-            await this.client.login(getSettings().discordToken)
+            await this.client.login(database.getSettings().discordToken)
         } catch {
             logger.error(
                 "Failed to start the discord bot, most likely because the token inputted is invalid"

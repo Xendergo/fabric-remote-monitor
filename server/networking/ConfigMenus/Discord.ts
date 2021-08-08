@@ -1,11 +1,11 @@
 import { WsConnectionManager } from "../WsConnectionManager"
 import { discordInput } from "../sendableTypes"
-import { setDiscordToken, getSettings } from "../../database/Settings"
 import { createDiscordBot, destroyDiscordBot } from "../.."
+import { database } from "../../database/DatabaseManager"
 
 export function discordListeners(user: WsConnectionManager) {
     user.listen(discordInput.fields.token, data => {
-        setDiscordToken(data.value)
+        database.setDiscordToken(data.value)
 
         destroyDiscordBot()
 
@@ -15,7 +15,7 @@ export function discordListeners(user: WsConnectionManager) {
     user.listen(discordInput.RequestDefault, data => {
         user.send(
             new discordInput.Everything({
-                token: getSettings().discordToken,
+                token: database.getSettings().discordToken,
             })
         )
     })

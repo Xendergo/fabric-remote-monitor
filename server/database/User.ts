@@ -1,28 +1,5 @@
-import { db } from "./Database"
-import { getSettings } from "./Settings"
-
-const setAdmin = db.prepare<{ admin: boolean; username: string }>(
-    "UPDATE users SET admin = $admin WHERE username = $username"
-)
-const setPassword = db.prepare<{ password: string; username: string }>(
-    "UPDATE users SET password = $password WHERE username = $username"
-)
-const setDiscordId = db.prepare<{ username: string; id: string }>(
-    "UPDATE users SET discordId = $id WHERE username = $username"
-)
-const getUser = db.prepare<{ username: string }>(
-    "SELECT * FROM users WHERE username = $username"
-)
-const insertUser = db.prepare<{
-    username: string
-    password: string
-}>(`INSERT INTO users (
-    username,
-    password
-) VALUES (
-    $username,
-    $password
-)`)
+import { database } from "./DatabaseManager"
+import { users } from "./Databases/1.0.0"
 
 export class User {
     constructor(username: string, admin: boolean, discordId?: string) {
@@ -38,16 +15,21 @@ export class User {
     setAdminStatus(admin: boolean) {
         this.admin = admin
 
-        setAdmin.run({
-            admin: admin,
-            username: this.username,
-        })
+        database.updateRows(
+            "users",
+            {
+                admin: admin ? 1 : 0,
+            },
+            {
+                username: this.username,
+            }
+        )
     }
 
     resetPassword(current: string, newPassword: string): string | null {
         const hashedCurrent = hashPassword(current)
 
-        const user = getUser.get({
+        const user = database.getRow<users>("users", {
             username: this.username,
         })
 
@@ -55,26 +37,36 @@ export class User {
             return "original password is incorrect"
         }
 
-        setPassword.run({
-            password: newPassword,
-            username: this.username,
-        })
+        database.updateRows(
+            "users",
+            {
+                password: newPassword,
+            },
+            {
+                username: this.username,
+            }
+        )
 
         return null
     }
 
     setDiscordId(newId: string) {
-        setDiscordId.run({
-            id: newId,
-            username: this.username,
-        })
+        database.updateRows(
+            "users",
+            {
+                username: this.username,
+            },
+            {
+                id: newId,
+            }
+        )
 
         this.discordId = newId
     }
 }
 
 export function getUserByUsername(username: string): User {
-    const user = getUser.get({
+    const user = database.getRow<users>("users", {
         username: username,
     })
 
@@ -88,7 +80,7 @@ export function getUserByUsername(username: string): User {
 export function checkPassword(username: string, password: string): User | null {
     const hashed = hashPassword(password)
 
-    const user = getUser.get({
+    const user = database.getRow<users>("users", {
         username: username,
     })
 
@@ -106,7 +98,7 @@ export function checkPassword(username: string, password: string): User | null {
 export function createUser(username: string, password: string): User {
     const hashed = hashPassword(password)
 
-    insertUser.run({
+    database.addRow("users", {
         username: username,
         password: hashed,
     })
@@ -115,7 +107,7 @@ export function createUser(username: string, password: string): User {
 }
 
 export function canCreateUser(username: string): true | string {
-    const maybeUser = getUser.get({
+    const maybeUser = database.getRow("users", {
         username: username,
     })
 
@@ -123,7 +115,7 @@ export function canCreateUser(username: string): true | string {
         return "That user already exists"
     }
 
-    const settings = getSettings()
+    const settings = database.getSettings()
 
     if (settings.allowedUsers == null) {
         return true

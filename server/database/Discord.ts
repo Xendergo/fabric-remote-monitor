@@ -1,32 +1,20 @@
-import { db } from "./Database"
-
-const getGuild = db.prepare<{ id: string }>(
-    "SELECT * FROM guilds WHERE id = $id"
-)
-const addGuild = db.prepare<{ id: string }>(
-    "INSERT INTO guilds (id) VALUES ($id)"
-)
-const setPrefix = db.prepare<{ prefix: string; id: string }>(
-    "UPDATE guilds SET prefix = $prefix WHERE id = $id"
-)
-const setMirror = db.prepare<{ mirror: string; id: string }>(
-    "UPDATE guilds SET mirror = $mirror WHERE id = $id"
-)
+import { database } from "./DatabaseManager"
+import { guilds } from "./Databases/1.0.0"
 
 export class DBGuild {
     constructor(id: string) {
         this.id = id
 
-        let guild = getGuild.get({
+        let guild = database.getRow<guilds>("guilds", {
             id,
         })
 
         if (!guild) {
-            addGuild.run({
+            database.addRow<guilds>("guilds", {
                 id,
             })
 
-            guild = getGuild.get({
+            guild = database.getRow<guilds>("guilds", {
                 id,
             })
         }
@@ -36,19 +24,29 @@ export class DBGuild {
     }
 
     setPrefix(newPrefix: string) {
-        setPrefix.run({
-            prefix: newPrefix,
-            id: this.id,
-        })
+        database.updateRows<guilds>(
+            "guilds",
+            {
+                prefix: newPrefix,
+            },
+            {
+                id: this.id,
+            }
+        )
 
         this.prefix = newPrefix
     }
 
     setMirror(newMirror: string) {
-        setMirror.run({
-            mirror: newMirror,
-            id: this.id,
-        })
+        database.updateRows<guilds>(
+            "guilds",
+            {
+                mirror: newMirror,
+            },
+            {
+                id: this.id,
+            }
+        )
 
         this.mirror = newMirror
     }
