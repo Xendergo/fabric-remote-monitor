@@ -73,7 +73,6 @@ export class User {
 
     setHiddenTabs(hiddenTabs: string[]) {
         this.hiddenTabs = hiddenTabs
-        console.log(hiddenTabs)
 
         database.updateRows<users>(
             "users",

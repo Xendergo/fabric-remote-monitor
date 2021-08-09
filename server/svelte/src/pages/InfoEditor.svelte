@@ -92,8 +92,6 @@
         const newOrdinal = sortedPages[index + direction].ordinal
         const swappedOrdinal = sortedPages[index].ordinal
 
-        console.log(newOrdinal, swappedOrdinal)
-
         updatePage(page => {
             page.ordinal = newOrdinal
             return page

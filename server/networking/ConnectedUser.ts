@@ -8,11 +8,8 @@ import {
     LoginSuccessful,
 } from "./sendableTypes"
 import { minecraftInterface } from ".."
-import { discordListeners } from "./ConfigMenus/Discord"
-import { accountListeners } from "./ConfigMenus/Account"
 import { discordBot } from "../index"
-import { gamerulesListeners } from "./ConfigMenus/Gamerules"
-import { infoEditorListeners, infoListeners } from "./ConfigMenus/Info"
+import { registeredPages } from "./Pages/PageManager"
 
 export class ConnectedUser {
     constructor(socket: ws) {
@@ -34,10 +31,10 @@ export class ConnectedUser {
 
             this.user = maybeUser
 
-            this.listenAll()
-
-            if (this.user.admin) {
-                this.listenAdminOnly()
+            for (const page of registeredPages) {
+                if (!page.adminOnly || this.user.admin) {
+                    page.addListeners(this.connectionManager, this.user)
+                }
             }
 
             this.connectionManager.send(new LoginSuccessful(this.user.admin))
@@ -56,17 +53,6 @@ export class ConnectedUser {
                 discordBot?.onMirrorMessage(mirrorMessage)
             }
         )
-    }
-
-    private listenAll() {
-        accountListeners(this.connectionManager, this.user!)
-        infoListeners(this.connectionManager)
-    }
-
-    private listenAdminOnly() {
-        discordListeners(this.connectionManager)
-        gamerulesListeners(this.connectionManager)
-        infoEditorListeners(this.connectionManager)
     }
 
     socket: ws

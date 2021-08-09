@@ -13,7 +13,6 @@
     let inputs: HTMLInputElement[] = []
 
     function onDefaultGamerules(data: Gamerules) {
-        console.log(data)
         gamerules = data.gamerules
     }
 

@@ -3,11 +3,10 @@ import { logger, minecraftInterface } from "../index"
 import { onDirectMessage } from "./connectAccount"
 import { DBGuild } from "../database/Discord"
 import { commands } from "./commandHelpers"
-import { PrefixCommand } from "./commands"
+import "./commands"
 import { MirrorMessage, newStyle } from "../networking/sendableTypes"
 import { broadcast } from "../networking/WsConnectionManager"
 import { database } from "../database/DatabaseManager"
-console.log(PrefixCommand)
 
 export class DiscordBot {
     constructor() {
