@@ -1,49 +1,59 @@
-import { writable, Writable } from "svelte/store"
+import type { Writable } from "svelte/store"
 import type {
     Sendable,
     ListenerManager,
-} from "../../../sendableTypes/sendableTypesHelpers"
-
-import type {
     AllowedInputFieldTypes,
     InputFields,
     InputFieldsClassesConstraint,
-} from "../../../sendableTypes/inputFields"
+} from "triangulum"
 
 /**
  * A writable store used by {@link InputFieldsAsStores} which allows giving the option to not update the server about certain things
  *
  * Useful for avoiding sending the same data to the server multiple times
+ *
+ * Also exposes the value stored in the store as a getter and setter, so it can still be used as a normal value if using it as a store is inconvenient
  */
-class NetworkingWritable<T> implements Writable<T> {
+export class NetworkingWritable<T> implements Writable<T> {
     constructor(initial: T) {
-        this.value = initial
+        this._value = initial
     }
 
     private subscribers: Set<(value: T, suppressNetworking: boolean) => void> =
         new Set()
-    private value: T
+    private _value: T
 
     set(value: T, suppressNetworking: boolean = false) {
-        if (value === this.value) return
+        if (value === this._value) return
 
-        this.value = value
+        this._value = value
         this.subscribers.forEach(v => {
-            v(this.value, suppressNetworking)
+            v(this._value, suppressNetworking)
         })
     }
 
     update(updater: (value: T) => T, suppressNetworking: boolean = false) {
-        this.set(updater(this.value), suppressNetworking)
+        this._value = updater(this._value)
+        this.subscribers.forEach(v => {
+            v(this._value, suppressNetworking)
+        })
     }
 
     subscribe(callback: (value: T, suppressNetworking: boolean) => void) {
         this.subscribers.add(callback)
-        callback(this.value, true)
+        callback(this._value, true)
 
         return () => {
             this.subscribers.delete(callback)
         }
+    }
+
+    get value() {
+        return this._value
+    }
+
+    set value(newValue: T) {
+        this.set(newValue)
     }
 }
 
@@ -75,8 +85,10 @@ export class InputFieldsAsStores<T extends InputFieldsClassesConstraint<T>> {
         let thisFields: AsWritable<T> = {} as AsWritable<T>
 
         for (const key in fields.fields) {
+            const options = fields.fieldOptions[key]
+
             const field = new NetworkingWritable<AllowedInputFieldTypes>(
-                fields.fields[key].type() == "bool" ? false : null
+                options.default ?? (options.type == "bool" ? false : null)
             )
 
             listenerManager.listen(fields.fields[key], data => {
@@ -100,7 +112,7 @@ export class InputFieldsAsStores<T extends InputFieldsClassesConstraint<T>> {
             return a
         }, {} as T)
 
-        this.localEverything = writable(defaultValues)
+        this.localEverything = new NetworkingWritable(defaultValues)
 
         this.everything = new NetworkingWritable(
             Object.assign({}, defaultValues)
@@ -115,7 +127,7 @@ export class InputFieldsAsStores<T extends InputFieldsClassesConstraint<T>> {
     ) {
         listenerManager.listen(fields.Everything, data => {
             for (const key in data) {
-                if (key == "channel") continue
+                if (key === "channel" || key === "constructor") continue
 
                 this.fields[key as keyof T].set(data[key as keyof T], true)
             }
@@ -123,14 +135,12 @@ export class InputFieldsAsStores<T extends InputFieldsClassesConstraint<T>> {
             this.localEverything.set(data)
         })
 
-        listenerManager.send(new fields.RequestDefault())
-
         for (const key in this.fields) {
             this.fields[key].subscribe((data, suppressNetworking) => {
                 this.everything.update(v => {
                     ;(v[key] as AllowedInputFieldTypes) = data
                     return v
-                }, true)
+                }, suppressNetworking)
 
                 if (fields.sendAsEverything || suppressNetworking) return
 
@@ -171,5 +181,5 @@ export class InputFieldsAsStores<T extends InputFieldsClassesConstraint<T>> {
      * fieldsAsStores.everything.set($localEverything)
      * ```
      */
-    localEverything: Writable<T>
+    localEverything: NetworkingWritable<T>
 }

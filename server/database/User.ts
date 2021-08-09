@@ -2,15 +2,22 @@ import { database } from "./DatabaseManager"
 import { users } from "./Databases/1.0.0"
 
 export class User {
-    constructor(username: string, admin: boolean, discordId?: string) {
+    constructor(
+        username: string,
+        admin: boolean,
+        hiddenTabs: string[],
+        discordId?: string
+    ) {
         this.username = username
         this.discordId = discordId
         this.admin = admin
+        this.hiddenTabs = hiddenTabs
     }
 
     username: string
     discordId?: string
     admin: boolean
+    hiddenTabs: string[]
 
     setAdminStatus(admin: boolean) {
         this.admin = admin
@@ -63,6 +70,21 @@ export class User {
 
         this.discordId = newId
     }
+
+    setHiddenTabs(hiddenTabs: string[]) {
+        this.hiddenTabs = hiddenTabs
+        console.log(hiddenTabs)
+
+        database.updateRows<users>(
+            "users",
+            {
+                hiddenPages: this.hiddenTabs.join("/"),
+            },
+            {
+                username: this.username,
+            }
+        )
+    }
 }
 
 export function getUserByUsername(username: string): User {
@@ -74,7 +96,12 @@ export function getUserByUsername(username: string): User {
         throw new Error("There's no user with that username")
     }
 
-    return new User(user.username, user.admin == 1, user.discordId)
+    return new User(
+        user.username,
+        user.admin == 1,
+        user.hiddenPages.split("/"),
+        user.discordId
+    )
 }
 
 export function checkPassword(username: string, password: string): User | null {
@@ -92,7 +119,12 @@ export function checkPassword(username: string, password: string): User | null {
         return null
     }
 
-    return new User(user.username, user.admin == 1, user.discordId)
+    return new User(
+        user.username,
+        user.admin == 1,
+        user.hiddenPages.split("/"),
+        user.discordId
+    )
 }
 
 export function createUser(username: string, password: string): User {
@@ -103,7 +135,7 @@ export function createUser(username: string, password: string): User {
         password: hashed,
     })
 
-    return new User(username, false)
+    return new User(username, false, [])
 }
 
 export function canCreateUser(username: string): true | string {

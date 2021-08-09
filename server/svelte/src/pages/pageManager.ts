@@ -5,6 +5,7 @@ interface RegisteredPage {
     component: any
     adminOnly: boolean
     visible: boolean
+    hideable: boolean
 }
 
 const writablePages: Writable<RegisteredPage[]> = writable([])
@@ -27,7 +28,8 @@ export function registerPage(
     name: string,
     component: any,
     adminOnly: boolean,
-    visible: boolean = true
+    visible: boolean = true,
+    hideable: boolean = true
 ) {
     writablePages.update(v => {
         v.push({
@@ -35,6 +37,7 @@ export function registerPage(
             component,
             adminOnly,
             visible,
+            hideable,
         })
 
         return v

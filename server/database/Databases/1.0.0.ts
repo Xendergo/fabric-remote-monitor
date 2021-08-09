@@ -9,6 +9,7 @@ export type users = {
     discordId: string
     password: string
     admin: number
+    hiddenPages: string
 }
 
 export type guilds = {
@@ -51,7 +52,8 @@ export class Database_1_0_0 {
             username TEXT PRIMARY KEY,
             discordId TEXT,
             password TEXT NOT NULL,
-            admin INTEGER DEFAULT 0
+            admin INTEGER NOT NULL DEFAULT 0,
+            hiddenPages TEXT NOT NULL DEFAULT ""
         );
         `
         )
@@ -192,7 +194,7 @@ export class Database_1_0_0 {
         this.run(
             this.constructUpdateStatement(table, values, where),
             _.assign(
-                _.mapKeys(values, key => `__assign_${key}`),
+                _.mapKeys(values, (value, key) => `__assign_${key}`),
                 where
             )
         )

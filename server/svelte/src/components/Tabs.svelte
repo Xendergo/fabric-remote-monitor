@@ -1,16 +1,29 @@
 <script lang="ts">
-    import { isAdmin } from "../networking"
+    import _ from "lodash"
+
+    import { hideTabsStores, isAdmin, send } from "../networking"
+    import { hideTabs } from "../../../networking/sendableTypes"
 
     import {
         changePage,
         page as currentPage,
         pages,
     } from "../pages/pageManager"
+
+    send(new hideTabs.RequestDefault())
+
+    let hiddenTabs: { [key: string]: boolean }
+    const everything = hideTabsStores.everything
+
+    $: {
+        $everything
+        hiddenTabs = _.mapValues(hideTabsStores.fields, v => v.value)
+    }
 </script>
 
 <div class="box">
     {#each $pages as page, i}
-        {#if page.visible && (!page.adminOnly || isAdmin)}
+        {#if page.visible && (!page.adminOnly || isAdmin) && (hiddenTabs[page.name] ?? true)}
             <div
                 class="tab"
                 class:currentPage={i == $currentPage}

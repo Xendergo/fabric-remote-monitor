@@ -17,6 +17,9 @@ Every user's password hash
 User's admin status
 `admin: bool, default: false`
 
+The user's hidden pages, `/` seperated
+`hiddenPages: string, not null, default: ""`
+
 ## Settings
 
 `settings`

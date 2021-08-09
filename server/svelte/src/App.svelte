@@ -19,11 +19,12 @@
 
     unregisterAll()
 
+    // Note: Remember to change sendableTypes.ts when adding new pages
     registerPage("Login", Login, false, false)
     registerPage("Home", Home, false)
     registerPage("Info", Info, false)
     registerPage("Info Editor", InfoEditor, true)
-    registerPage("Account", Account, true)
+    registerPage("Account", Account, false, true, false)
     registerPage("Discord", Discord, true)
     registerPage("Gamerules", Gamerules, true)
 
@@ -36,7 +37,10 @@
     {#if $popups.length != 0}
         <Popup title={$popups[0].title} text={$popups[0].text} />
     {/if}
-    <Tabs />
+
+    {#if $pages[$page].visible}
+        <Tabs />
+    {/if}
 
     {#each $pages as RegisteredPage, i}
         {#if i === $page}
