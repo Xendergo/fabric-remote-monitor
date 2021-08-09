@@ -3,6 +3,7 @@ import sqlite3 from "better-sqlite3"
 import path from "path"
 import { Statement } from "better-sqlite3"
 import _ from "lodash"
+import { DisableTabs, disableTabs } from "../../networking/sendableTypes"
 
 export type users = {
     username: string
@@ -39,6 +40,7 @@ interface Settings {
     allowedUsers: string[] | null
     proximityChat: boolean
     discordToken: string
+    disabledTabs: string[]
 }
 
 @registerDatabase("1.0.0")
@@ -62,7 +64,8 @@ export class Database_1_0_0 {
         CREATE TABLE IF NOT EXISTS settings (
             allowedUsers TEXT,
             proximityChat INTEGER DEFAULT 0,
-            discordToken TEXT
+            discordToken TEXT,
+            disabledTabs TEXT NOT NULL DEFAULT ""
         );
         `)
 
@@ -204,19 +207,26 @@ export class Database_1_0_0 {
         this.run(this.constructDeleteStatement(table, where))
     }
 
-    getSettings() {
+    getSettings(): Settings {
         const settings = this.get(`SELECT * FROM settings ASC LIMIT 1`)
 
         return {
             allowedUsers: JSON.parse(settings.allowedUsers),
             proximityChat: settings.proximityChat != 0,
             discordToken: settings.discordToken,
-        } as Settings
+            disabledTabs: settings.disabledTabs.split("/"),
+        }
     }
 
     setDiscordToken(newToken: string | null) {
         this.run(`UPDATE settings SET discordToken = $newToken`, {
             newToken: newToken,
+        })
+    }
+
+    setDisabledTabs(pages: string[]) {
+        this.run(`UPDATE settings SET disabledTabs = $disabledTabs`, {
+            disabledTabs: pages.join("/"),
         })
     }
 

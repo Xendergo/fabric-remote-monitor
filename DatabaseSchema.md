@@ -34,6 +34,9 @@ Whether to enable proximity chat
 Discord bot token, running a discord bot is disabled if this is null
 `discordToken: string, default: null`
 
+Which pages are disabled for all users, `/` seperated
+`disabledPages: string, not null, default: ""`
+
 ## Discord server settings
 
 `guilds`

@@ -1,8 +1,13 @@
 <script lang="ts">
     import _ from "lodash"
 
-    import { hideTabsStores, isAdmin, send } from "../networking"
-    import { hideTabs } from "../../../networking/sendableTypes"
+    import {
+        disableTabsStores,
+        hideTabsStores,
+        isAdmin,
+        send,
+    } from "../networking"
+    import { disableTabs, hideTabs } from "../../../networking/sendableTypes"
 
     import {
         changePage,
@@ -11,19 +16,28 @@
     } from "../pages/pageManager"
 
     send(new hideTabs.RequestDefault())
+    send(new disableTabs.RequestDefault())
 
     let hiddenTabs: { [key: string]: boolean }
-    const everything = hideTabsStores.everything
+    const hiddenTabsEverything = hideTabsStores.everything
 
     $: {
-        $everything
+        $hiddenTabsEverything
         hiddenTabs = _.mapValues(hideTabsStores.fields, v => v.value)
+    }
+
+    let disabledTabs: { [key: string]: boolean }
+    const disabledTabsEverything = disableTabsStores.everything
+
+    $: {
+        $disabledTabsEverything
+        disabledTabs = _.mapValues(disableTabsStores.fields, v => v.value)
     }
 </script>
 
 <div class="box">
     {#each $pages as page, i}
-        {#if page.visible && (!page.adminOnly || isAdmin) && (hiddenTabs[page.name] ?? true)}
+        {#if page.visible && (!page.adminOnly || isAdmin) && (hiddenTabs[page.name] ?? true) && (disabledTabs[page.name] ?? true)}
             <div
                 class="tab"
                 class:currentPage={i == $currentPage}

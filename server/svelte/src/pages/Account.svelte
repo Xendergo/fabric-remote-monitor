@@ -6,6 +6,7 @@
         hideTabsStores,
         isAdmin,
         send,
+        disableTabsStores,
     } from "../networking"
     import { hideTabs, resetPassword } from "../../../networking/sendableTypes"
     import type { HideTabs } from "../../../networking/sendableTypes"
@@ -30,6 +31,14 @@
                 isAdmin || !pagesDerefed.find(v => v.name === name)?.adminOnly
         ) as (keyof HideTabs)[]
     }
+
+    let disabledTabs: { [key: string]: boolean }
+    const disabledTabsEverything = disableTabsStores.everything
+
+    $: {
+        $disabledTabsEverything
+        disabledTabs = _.mapValues(disableTabsStores.fields, v => v.value)
+    }
 </script>
 
 <h3>Reset password</h3>
@@ -51,7 +60,11 @@
 <Response inputFields={resetPassword} {listenerManager} />
 <h3>Hide tabs</h3>
 {#each keys as key}
-    {key} -
-    <input type="checkbox" bind:checked={hideTabsStores.fields[key].value} /><br
-    />
+    {#if disabledTabs[key] ?? true}
+        {key} -
+        <input
+            type="checkbox"
+            bind:checked={hideTabsStores.fields[key].value}
+        /><br />
+    {/if}
 {/each}

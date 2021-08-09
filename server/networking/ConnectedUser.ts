@@ -10,6 +10,7 @@ import {
 import { minecraftInterface } from ".."
 import { discordBot } from "../index"
 import { registeredPages } from "./Pages/PageManager"
+import { database } from "../database/DatabaseManager"
 
 export class ConnectedUser {
     constructor(socket: ws) {
@@ -31,8 +32,13 @@ export class ConnectedUser {
 
             this.user = maybeUser
 
+            const disabledTabs = database.getSettings().disabledTabs
+
             for (const page of registeredPages) {
-                if (!page.adminOnly || this.user.admin) {
+                if (
+                    !disabledTabs.includes(page.name) &&
+                    (!page.adminOnly || this.user.admin)
+                ) {
                     page.addListeners(this.connectionManager, this.user)
                 }
             }

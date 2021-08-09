@@ -6,7 +6,6 @@ import {
     Registry,
     InputFields,
 } from "triangulum"
-import { type } from "os"
 
 export const websiteRegistry = new Registry<
     Sendable,
@@ -314,37 +313,44 @@ export const resetPassword = new InputFields<ResetPassword>(
     "Reset password"
 )
 
-export interface HideTabs {
+export interface HideTabs extends DisableTabs {
     Home: boolean
+    Info: boolean
+    "Info Editor": boolean
+    Discord: boolean
+    Gamerules: boolean
+    Features: boolean
+}
+
+export const hideTabs = new InputFields<HideTabs>(
+    websiteRegistry,
+    "HideTabs",
+    {
+        Home: { type: "bool", default: true },
+        Info: { type: "bool", default: true },
+        "Info Editor": { type: "bool", default: true },
+        Discord: { type: "bool", default: true },
+        Gamerules: { type: "bool", default: true },
+        Features: { type: "bool", default: true },
+    },
+    "bruh"
+)
+
+export interface DisableTabs {
     Info: boolean
     "Info Editor": boolean
     Discord: boolean
     Gamerules: boolean
 }
 
-const types = Object.freeze({
-    Home: Object.freeze({ type: "bool", default: true }),
-    Info: Object.freeze({ type: "bool", default: true }),
-    "Info Editor": Object.freeze({ type: "bool", default: true }),
-    Discord: Object.freeze({ type: "bool", default: true }),
-    Gamerules: Object.freeze({ type: "bool", default: true }),
-})
-
-export const hideTabs = new InputFields<HideTabs>(
-    websiteRegistry,
-    "HideTabs",
-    types as any,
-    /*
-    typescript: yo i can inference types for you
-    me: so if i make a variable const, object.freeze it, object.freeze everything inside it, and hard code the strings inside, you'll inference that the properties aren't just random strings, right?
-    typescript: ( ͡°◡ ͡°)
-    me: right?
-    */ "bruh"
-)
-
-export const globallyHideTabs = new InputFields<HideTabs>(
+export const disableTabs = new InputFields<DisableTabs>(
     websiteRegistry,
     "GloballyHideTags",
-    types as any,
+    {
+        Info: { type: "bool", default: true },
+        "Info Editor": { type: "bool", default: true },
+        Discord: { type: "bool", default: true },
+        Gamerules: { type: "bool", default: true },
+    },
     "bruh"
 )

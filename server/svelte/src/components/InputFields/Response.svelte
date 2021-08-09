@@ -1,15 +1,9 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
 
-    import type {
-        ListenerManager,
-        Sendable,
-    } from "../../../../../sendableTypes/sendableTypesHelpers"
+    import type { ListenerManager, Sendable } from "triangulum"
 
-    import type {
-        InputFields,
-        ResponseInterface,
-    } from "../../../../../sendableTypes/inputFields"
+    import type { InputFields, ResponseInterface } from "triangulum"
 
     export let inputFields: InputFields<any>
     export let listenerManager: ListenerManager<Sendable>

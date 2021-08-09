@@ -16,6 +16,7 @@
     import Gamerules from "./pages/Gamerules.svelte"
     import Info from "./pages/Info.svelte"
     import InfoEditor from "./pages/InfoEditor.svelte"
+    import Features from "./pages/Features.svelte"
 
     unregisterAll()
 
@@ -27,6 +28,7 @@
     registerPage("Account", Account, false, true, false)
     registerPage("Discord", Discord, true)
     registerPage("Gamerules", Gamerules, true)
+    registerPage("Features", Features, true)
 
     const conf = {
         duration: 200,

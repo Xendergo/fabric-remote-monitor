@@ -5,7 +5,12 @@ import {
 } from "../../networking/sendableTypes"
 import { InputFieldsAsStores } from "./inputFieldsToStoresConverter"
 import { Sendable, JSONListenerManager } from "triangulum"
-import { hideTabs, HideTabs } from "../../networking/sendableTypes"
+import {
+    hideTabs,
+    HideTabs,
+    disableTabs,
+    DisableTabs,
+} from "../../networking/sendableTypes"
 
 export let isAdmin = false
 
@@ -49,6 +54,11 @@ export const discordInputStores = new InputFieldsAsStores(
 
 export const hideTabsStores = new InputFieldsAsStores<HideTabs>(
     hideTabs,
+    listenerManager
+)
+
+export const disableTabsStores = new InputFieldsAsStores<DisableTabs>(
+    disableTabs,
     listenerManager
 )
 
