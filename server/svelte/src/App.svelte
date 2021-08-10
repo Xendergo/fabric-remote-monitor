@@ -17,6 +17,7 @@
     import Info from "./pages/Info.svelte"
     import InfoEditor from "./pages/InfoEditor.svelte"
     import Features from "./pages/Features.svelte"
+    import { githubLink } from "./networking"
 
     unregisterAll()
 
@@ -55,6 +56,16 @@
             </div>
         {/if}
     {/each}
+
+    {#if $githubLink}
+        <a href={$githubLink} id="github-link" target="_blank">
+            <img
+                src="GitHub-Mark-120px-plus.png"
+                id="github-image"
+                alt="Link to github page"
+            />
+        </a>
+    {/if}
 </main>
 
 <style>
@@ -84,6 +95,20 @@
         position: absolute;
         top: calc(16px + 5vh);
         left: 8px;
+    }
+
+    #github-link {
+        position: fixed;
+        right: 2vh;
+        bottom: 2vh;
+    }
+
+    #github-image {
+        width: 4vh;
+        height: 4vh;
+        background-color: white;
+        border-radius: 50%;
+        outline: white solid 1px;
     }
 
     .notVisible {

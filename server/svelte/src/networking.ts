@@ -5,12 +5,14 @@ import {
 } from "../../networking/sendableTypes"
 import { InputFieldsAsStores } from "./inputFieldsToStoresConverter"
 import { Sendable, JSONListenerManager } from "triangulum"
+import { GithubLink } from "../../networking/sendableTypes"
 import {
     hideTabs,
     HideTabs,
     disableTabs,
     DisableTabs,
 } from "../../networking/sendableTypes"
+import { writable, Writable } from "svelte/store"
 
 export let isAdmin = false
 
@@ -79,3 +81,9 @@ export function stopListening<T extends Sendable>(
 export function send<T extends Sendable>(data: T) {
     listenerManager.send(data)
 }
+
+listen(GithubLink, data => {
+    githubLink.set(data.link)
+})
+
+export let githubLink: Writable<string | null> = writable(null)

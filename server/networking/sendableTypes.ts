@@ -274,6 +274,20 @@ export class Pages extends Sendable {
 @MakeSendable(websiteRegistry, "CurrentPages", [strats.trust()])
 export class CurrentPages extends Sendable {}
 
+@MakeSendable(websiteRegistry, "GithubLink", [
+    strats.each({
+        link: strats.string,
+    }),
+])
+export class GithubLink extends Sendable {
+    constructor(link: string) {
+        super()
+        this.link = link
+    }
+
+    link: string
+}
+
 export interface Page {
     title: string
     data: string

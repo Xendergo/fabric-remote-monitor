@@ -7,6 +7,9 @@
     },
     "author": "Xendergo",
     "license": "GPL-3.0",
+    "repository": {
+        "url": "https://github.com/Xendergo/fabric-remote-monitor"
+    },
     "dependencies": {
         "better-sqlite3": "^7.4.1",
         "discord.js": "^12.5.3",

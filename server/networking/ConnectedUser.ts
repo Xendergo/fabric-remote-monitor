@@ -6,11 +6,13 @@ import {
     LoginDetails,
     LoginFailed,
     LoginSuccessful,
+    GithubLink,
 } from "./sendableTypes"
 import { minecraftInterface } from ".."
 import { discordBot } from "../index"
 import { registeredPages } from "./Pages/PageManager"
 import { database } from "../database/DatabaseManager"
+import pkg from "../package.json"
 
 export class ConnectedUser {
     constructor(socket: ws) {
@@ -22,6 +24,7 @@ export class ConnectedUser {
     }
 
     listen() {
+        this.connectionManager.send(new GithubLink(pkg.repository.url))
         this.connectionManager.listen(LoginDetails, (data: LoginDetails) => {
             const maybeUser = checkPassword(data.username, data.password)
 
