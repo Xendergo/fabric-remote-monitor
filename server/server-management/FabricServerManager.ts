@@ -3,8 +3,8 @@ import path from "path"
 import { ChildProcess, spawn } from "child_process"
 
 class FabricServerManager {
-    installDir: string
-    childInstance?: ChildProcess
+    private installDir: string
+    public childInstance?: ChildProcess
 
     // new server manager instance
     constructor(installDirPath?: string) {
@@ -25,13 +25,20 @@ class FabricServerManager {
         process.chdir(this.installDir)
         this.childInstance = spawn("java", ["-jar", "fabric-server-launch.jar"])
     }
-    stop() {}
-    restart() {}
+    stop() {
+        this.childInstance?.kill('SIGTERM');
+    }
+    restart() {
+      this.stop();
+      this.start();
+    }
     /**
      * Returns nodejs stream of logs
      * Possibly consider saving logs to sqlite database?
      */
-    logStream() {}
+    logStream() {
+      return this.childInstance?.stdout;
+    }
 }
 
 const test = new FabricServerManager()
