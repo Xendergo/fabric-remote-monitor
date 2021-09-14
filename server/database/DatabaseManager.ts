@@ -38,6 +38,12 @@ export const location = match(platform)
         throw new Error("You're using an unsupported operating system")
     })
 
+if (!fs.existsSync(location)) {
+    fs.mkdirSync(location, {
+        recursive: true,
+    })
+}
+
 if (!fs.existsSync(path.join(location, "version.txt"))) {
     fs.writeFileSync(path.join(location, "version.txt"), version, {
         encoding: "ascii",

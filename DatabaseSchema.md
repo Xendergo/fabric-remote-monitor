@@ -1,9 +1,44 @@
-# Tables
+For any setting that could be null, the key not existing should be taken as null
 
-## Users
+# Settings
 
-`users`
+Settings are stored just on redis's global hashmap
+
+Which users are allowed to make accounts on the website, by minecraft username, null means anyone can make an account.
+`allowedUsers: json list, default: first user to make an account (in theory the server admin), can be null`
+
+Whether to enable proximity chat
+`proximityChat: bool, default: false`
+
+Discord bot token, running a discord bot is disabled if this is null
+`discordToken: string, default: null`
+
+Which tabs are disabled for all users, `/` seperated
+`disabledTabs: string, not null, default: ""`
+
+# Sets & incrementers
+
+The keys in the sets don't include prefixes
+
+## `users`
+
+A set of all the users by username
+
+## `pages`
+
+A set of all the pages in the info tab by a unique id
+
+## `pages_id_inc`
+
+A number that represents the id of the next page to get added, incremented for every new page
+
+# Data types
+
+## `user`
+
 Data specific for every user that can access the website
+
+prefixed with `user_`, keyed by username
 
 Every user's username, must be the same as their minecraft username
 `username: string, primary key, not null`
@@ -15,35 +50,16 @@ Every user's password hash
 `password: string, not null`
 
 User's admin status
-`admin: bool, default: false`
+`admin: "true" | "false", default: false`
 
-The user's hidden pages, `/` seperated
-`hiddenPages: string, not null, default: ""`
+The user's hidden tabs, `/` seperated
+`hiddenTabs: string, not null, default: ""`
 
-## Settings
+## `guild`
 
-`settings`
-Data specific to the whole server.
-
-Which users are allowed to make accounts on the website, by minecraft username, null means anyone can make an account.
-`allowedUsers: json list, default: first user to make an account (in theory the server admin), can be null`
-
-Whether to enable proximity chat
-`proximityChat: bool, default: false`
-
-Discord bot token, running a discord bot is disabled if this is null
-`discordToken: string, default: null`
-
-Which pages are disabled for all users, `/` seperated
-`disabledPages: string, not null, default: ""`
-
-## Discord server settings
-
-`guilds`
 Data specific to each discord server the discord bot is in
 
-The guild's id
-`id: integer, primary key`
+prefixed with `guild_`, keyed by id
 
 The discord bot's prefix
 `prefix: string, default: "mc"`
@@ -51,13 +67,11 @@ The discord bot's prefix
 The channel where in game chat should be mirrored
 `mirror: integer, can be null`
 
-## Pages
+## `page`
 
-`pages`
 Markdown for the information pages shown on the info tab
 
-A unique id for each page
-`id: integer, primary key`
+prefixed with `page_`, keyed by id
 
 The order in which the pages should be shown in the tabs
 `ordinal: integer, not null`

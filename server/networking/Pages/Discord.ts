@@ -15,10 +15,10 @@ class DiscordListeners {
             createDiscordBot()
         })
 
-        user.listen(discordInput.RequestDefault, data => {
+        user.listen(discordInput.RequestDefault, async data => {
             user.send(
                 new discordInput.Everything({
-                    token: database.getSettings().discordToken,
+                    token: (await database.getSettings()).discordToken,
                 })
             )
         })

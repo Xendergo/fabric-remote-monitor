@@ -25,29 +25,37 @@ export class ConnectedUser {
 
     listen() {
         this.connectionManager.send(new GithubLink(pkg.repository.url))
-        this.connectionManager.listen(LoginDetails, (data: LoginDetails) => {
-            const maybeUser = checkPassword(data.username, data.password)
+        this.connectionManager.listen(
+            LoginDetails,
+            async (data: LoginDetails) => {
+                const maybeUser = await checkPassword(
+                    data.username,
+                    data.password
+                )
 
-            if (!maybeUser) {
-                this.connectionManager.send(new LoginFailed())
-                return
-            }
-
-            this.user = maybeUser
-
-            const disabledTabs = database.getSettings().disabledTabs
-
-            for (const page of registeredPages) {
-                if (
-                    !disabledTabs.includes(page.name) &&
-                    (!page.adminOnly || this.user.admin)
-                ) {
-                    page.addListeners(this.connectionManager, this.user)
+                if (!maybeUser) {
+                    this.connectionManager.send(new LoginFailed())
+                    return
                 }
-            }
 
-            this.connectionManager.send(new LoginSuccessful(this.user.admin))
-        })
+                this.user = maybeUser
+
+                const disabledTabs = (await database.getSettings()).disabledTabs
+
+                for (const page of registeredPages) {
+                    if (
+                        !disabledTabs.includes(page.name) &&
+                        (!page.adminOnly || this.user.admin)
+                    ) {
+                        page.addListeners(this.connectionManager, this.user)
+                    }
+                }
+
+                this.connectionManager.send(
+                    new LoginSuccessful(await this.user.admin)
+                )
+            }
+        )
 
         this.connectionManager.listen(
             MirrorMessage,
@@ -65,6 +73,6 @@ export class ConnectedUser {
     }
 
     socket: ws
-    user?: User
+    user: User | null = null
     connectionManager: WsConnectionManager
 }

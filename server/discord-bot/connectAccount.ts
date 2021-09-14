@@ -76,6 +76,7 @@ async function connectAccount(msg: Message) {
         return
     }
 
-    connectedUser.user?.setDiscordId(msg.author.id)
+    connectedUser.user!.discordToken = msg.author.id
+
     msg.reply("Your discord account has been successfully connected")
 }

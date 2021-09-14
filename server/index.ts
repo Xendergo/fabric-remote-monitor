@@ -13,11 +13,7 @@ import { serverStateManager } from "./server-state/server-state"
 import { MinecraftInterfaceReady } from "./server-state/serverStateMessages"
 import { database, location } from "./database/DatabaseManager"
 
-if (!fs.existsSync(location)) {
-    fs.mkdirSync(location, {
-        recursive: true,
-    })
-}
+export const REDIS_PORT = 6379
 
 export const logger = createLogger({
     format: format.combine(
@@ -168,14 +164,16 @@ export function destroyDiscordBot() {
     }
 }
 
-export function createDiscordBot() {
-    const token = database.getSettings().discordToken
+export async function createDiscordBot() {
+    const token = (await database.getSettings()).discordToken
 
     if (token == null) return
 
     discordBot = new DiscordBot()
 }
 
-if (database.getSettings().discordToken != null) {
-    createDiscordBot()
-}
+database.getSettings().then(settings => {
+    if (settings.discordToken != null) {
+        createDiscordBot()
+    }
+})

@@ -14,7 +14,7 @@ export class DiscordBot {
 
         this.login()
 
-        this.client.on("message", msg => {
+        this.client.on("message", async msg => {
             if (msg.author.bot) return
 
             if (msg.guild == null) {
@@ -24,7 +24,7 @@ export class DiscordBot {
 
             const guild = new DBGuild(msg.guild.id)
 
-            if (guild.mirror == msg.channel.id) {
+            if ((await guild.mirror) == msg.channel.id) {
                 const message = new MirrorMessage(
                     `<${msg.member?.displayName}> ${msg.content}`,
                     newStyle({})
@@ -37,7 +37,7 @@ export class DiscordBot {
 
             const split = msg.content.split(" ")
 
-            if (split.length < 2 || split[0] != guild.prefix) return
+            if (split.length < 2 || split[0] != (await guild.prefix)) return
 
             if (!commands.has(split[1])) {
                 msg.channel.send(`Couldn't find the command ${split[1]}`)
@@ -49,10 +49,12 @@ export class DiscordBot {
     }
 
     onMirrorMessage(msg: MirrorMessage) {
-        this.client.guilds.cache.forEach(guild => {
+        this.client.guilds.cache.forEach(async guild => {
             const dbGuild = new DBGuild(guild.id)
 
-            const channel = guild.channels.cache.get(dbGuild.mirror)
+            const channel = guild.channels.cache.get(
+                (await dbGuild.mirror) ?? ""
+            )
             if (channel?.isText()) {
                 channel.send(msg.message)
             }
@@ -61,7 +63,9 @@ export class DiscordBot {
 
     private async login() {
         try {
-            await this.client.login(database.getSettings().discordToken)
+            await this.client.login(
+                (await database.getSettings()).discordToken ?? undefined
+            )
         } catch {
             logger.error(
                 "Failed to start the discord bot, most likely because the token inputted is invalid"

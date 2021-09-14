@@ -1,152 +1,80 @@
 import { database } from "./DatabaseManager"
-import { users } from "./Databases/1.0.0"
 
 export class User {
-    constructor(
-        username: string,
-        admin: boolean,
-        hiddenTabs: string[],
-        discordId?: string
-    ) {
+    constructor(username: string) {
         this.username = username
-        this.discordId = discordId
-        this.admin = admin
-        this.hiddenTabs = hiddenTabs
     }
 
     username: string
-    discordId?: string
-    admin: boolean
-    hiddenTabs: string[]
 
-    setAdminStatus(admin: boolean) {
-        this.admin = admin
-
-        database.updateRows(
-            "users",
-            {
-                admin: admin ? 1 : 0,
-            },
-            {
-                username: this.username,
-            }
-        )
+    // @ts-ignore
+    get admin(): Promise<boolean> {
+        return database.adminStatus(this.username)
     }
 
-    resetPassword(current: string, newPassword: string): string | null {
+    set admin(admin: boolean) {
+        database.setAdmin(this.username, admin)
+    }
+
+    // @ts-ignore
+    get discordToken(): Promise<string | null> {
+        return database.discordId(this.username)
+    }
+
+    set discordToken(data: string | null) {
+        database.setDiscordId(this.username, data)
+    }
+
+    // @ts-ignore
+    get hiddenTabs(): Promise<string[]> {
+        return database.getHiddenTabs(this.username)
+    }
+
+    set hiddenTabs(hiddenTabs: string[]) {
+        database.setHiddenTabs(this.username, hiddenTabs)
+    }
+
+    async resetPassword(
+        current: string,
+        newPassword: string
+    ): Promise<string | null> {
         const hashedCurrent = hashPassword(current)
 
-        const user = database.getRow<users>("users", {
-            username: this.username,
-        })
+        const password = await database.getPasswordHash(this.username)
 
-        if (user.password != hashedCurrent) {
+        if (password != hashedCurrent) {
             return "original password is incorrect"
         }
 
-        database.updateRows(
-            "users",
-            {
-                password: newPassword,
-            },
-            {
-                username: this.username,
-            }
-        )
+        database.setPasswordHash(this.username, hashPassword(newPassword))
 
         return null
     }
-
-    setDiscordId(newId: string) {
-        database.updateRows(
-            "users",
-            {
-                username: this.username,
-            },
-            {
-                id: newId,
-            }
-        )
-
-        this.discordId = newId
-    }
-
-    setHiddenTabs(hiddenTabs: string[]) {
-        this.hiddenTabs = hiddenTabs
-
-        database.updateRows<users>(
-            "users",
-            {
-                hiddenPages: this.hiddenTabs.join("/"),
-            },
-            {
-                username: this.username,
-            }
-        )
-    }
 }
 
-export function getUserByUsername(username: string): User {
-    const user = database.getRow<users>("users", {
-        username: username,
-    })
-
-    if (user == undefined) {
-        throw new Error("There's no user with that username")
+export async function checkPassword(
+    username: string,
+    password: string
+): Promise<User | null> {
+    if (!(await database.userExists(username))) {
+        return null
     }
 
-    return new User(
-        user.username,
-        user.admin == 1,
-        user.hiddenPages.split("/"),
-        user.discordId
-    )
-}
-
-export function checkPassword(username: string, password: string): User | null {
     const hashed = hashPassword(password)
 
-    const user = database.getRow<users>("users", {
-        username: username,
-    })
-
-    if (user == undefined) {
+    if (hashed != (await database.getPasswordHash(username))) {
         return null
     }
 
-    if (hashed != user.password) {
-        return null
-    }
-
-    return new User(
-        user.username,
-        user.admin == 1,
-        user.hiddenPages.split("/"),
-        user.discordId
-    )
+    return new User(username)
 }
 
-export function createUser(username: string, password: string): User {
-    const hashed = hashPassword(password)
-
-    database.addRow("users", {
-        username: username,
-        password: hashed,
-    })
-
-    return new User(username, false, [])
-}
-
-export function canCreateUser(username: string): true | string {
-    const maybeUser = database.getRow("users", {
-        username: username,
-    })
-
-    if (maybeUser != null) {
+export async function canCreateUser(username: string): Promise<true | string> {
+    if (await database.userExists(username)) {
         return "That user already exists"
     }
 
-    const settings = database.getSettings()
+    const settings = await database.getSettings()
 
     if (settings.allowedUsers == null) {
         return true
@@ -161,7 +89,7 @@ export function canCreateUser(username: string): true | string {
     return "That username doesn't have permission to create an account"
 }
 
-function hashPassword(password: string): string {
+export function hashPassword(password: string): string {
     // TODO: Use an actual hashing algorithm
     return password
 }

@@ -12,7 +12,7 @@ export class PrefixCommand {
     exec(msg: Message, args: [string]) {
         const guild = new DBGuild(msg.guild!.id)
 
-        guild.setPrefix(args[0])
+        guild.prefix = args[0]
     }
 }
 
@@ -21,6 +21,6 @@ export class MirrorCommand {
     exec(msg: Message, args: []) {
         const guild = new DBGuild(msg.guild!.id)
 
-        guild.setMirror(msg.channel.id)
+        guild.mirror = msg.channel.id
     }
 }

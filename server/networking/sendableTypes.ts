@@ -255,15 +255,15 @@ export interface Gamerule {
     }),
 ])
 export class Pages extends Sendable {
-    constructor(pages: (Page & { id: number })[]) {
+    constructor(pages: (Page & { id: string })[]) {
         super()
 
         this.pages = pages
     }
 
-    pages: (Page & { id: number })[]
+    pages: (Page & { id: string })[]
 
-    getPages(): Map<number, Page> {
+    getPages(): Map<string, Page> {
         return this.pages.reduce((a, v) => {
             a.set(v.id, v)
             return a

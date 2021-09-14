@@ -7,13 +7,13 @@ import { database } from "../../database/DatabaseManager"
 @RegisterPage("Features", true)
 class FeaturesListeners {
     static addListeners(connection: WsConnectionManager) {
-        connection.listen(disableTabs.RequestDefault, data => {
+        connection.listen(disableTabs.RequestDefault, async data => {
             let res = _.mapValues(disableTabs.fields, v => true)
 
             res = _.assign(
                 res,
                 _.mapValues(
-                    _.pick(res, database.getSettings().disabledTabs),
+                    _.pick(res, (await database.getSettings()).disabledTabs),
                     v => false
                 )
             )

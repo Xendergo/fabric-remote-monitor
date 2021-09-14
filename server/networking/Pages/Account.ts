@@ -7,8 +7,8 @@ import { RegisterPage } from "./PageManager"
 @RegisterPage("Account", false)
 class AccountListeners {
     static addListeners(connection: WsConnectionManager, user: User) {
-        connection.listen(resetPassword.Everything, data => {
-            const err = user.resetPassword(
+        connection.listen(resetPassword.Everything, async data => {
+            const err = await user.resetPassword(
                 data.password ?? "",
                 data.newPassword ?? ""
             )
@@ -25,21 +25,19 @@ class AccountListeners {
             }
         })
 
-        connection.listen(hideTabs.RequestDefault, data => {
+        connection.listen(hideTabs.RequestDefault, async data => {
             let res = _.mapValues(hideTabs.fields, v => true)
 
             res = _.assign(
                 res,
-                _.mapValues(_.pick(res, user.hiddenTabs), v => false)
+                _.mapValues(_.pick(res, await user.hiddenTabs), v => false)
             )
 
             connection.send(new hideTabs.Everything(res))
         })
 
         connection.listen(hideTabs.Everything, data => {
-            user.setHiddenTabs(
-                _.keysIn(_.pickBy(data, value => value === false))
-            )
+            user.hiddenTabs = _.keysIn(_.pickBy(data, value => value === false))
         })
     }
 }
