@@ -12,7 +12,12 @@
     send(new CurrentPages())
 
     function onPages(newPages: Pages) {
-        pages = newPages.getPages()
+        pages = new Map(
+            Array.from(newPages.getPages().entries()).map(v => [
+                parseInt(v[0]),
+                v[1],
+            ])
+        )
 
         stopListening(Pages, onPages)
     }
@@ -24,10 +29,10 @@
 
         send(
             new Pages(
-                Array.from(pages.entries()).reduce<(Page & { id: number })[]>(
+                Array.from(pages.entries()).reduce<(Page & { id: string })[]>(
                     (a, v) => {
                         a.push({
-                            id: v[0],
+                            id: v[0].toString(),
                             title: v[1].title,
                             data: v[1].data,
                             ordinal: v[1].ordinal,

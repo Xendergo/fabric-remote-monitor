@@ -20,7 +20,7 @@ abstract class DiscordCommand {
     abstract exec(msg: Message, args: AllowedArgumentTypes[]): void
 
     run(msg: Message, args: string[]) {
-        const converted = args.map((arg, i) => {
+        const converted = args.slice(0, this.args.length).map((arg, i) => {
             if (this.args[i].type == "string") {
                 return arg
             }

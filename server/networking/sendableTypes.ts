@@ -249,7 +249,7 @@ export interface Gamerule {
                 title: strats.string,
                 data: strats.string,
                 ordinal: strats.number,
-                id: strats.number,
+                id: strats.string,
             })
         ),
     }),

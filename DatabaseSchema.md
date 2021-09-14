@@ -16,7 +16,7 @@ Discord bot token, running a discord bot is disabled if this is null
 Which tabs are disabled for all users, `/` seperated
 `disabledTabs: string, not null, default: ""`
 
-# Sets & incrementers
+# Sets
 
 The keys in the sets don't include prefixes
 
@@ -27,10 +27,6 @@ A set of all the users by username
 ## `pages`
 
 A set of all the pages in the info tab by a unique id
-
-## `pages_id_inc`
-
-A number that represents the id of the next page to get added, incremented for every new page
 
 # Data types
 

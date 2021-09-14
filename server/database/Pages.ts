@@ -7,15 +7,11 @@ database.getPages().then(data => {
     pages = new Pages(data)
 })
 
-export function updatePages(newPages: Pages) {
-    database.deletePages()
+export async function updatePages(newPages: Pages) {
+    await database.deletePages()
 
     for (const page of newPages.pages) {
-        database.addPage({
-            data: page.data,
-            title: page.title,
-            ordinal: page.ordinal,
-        })
+        database.addPage(page)
     }
 
     pages = newPages

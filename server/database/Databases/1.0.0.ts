@@ -17,7 +17,11 @@ interface Settings {
 @registerDatabase("1.0.0")
 export class Database_1_0_0 {
     constructor() {
-        this.db = createClient({ socket: { port: REDIS_PORT } })
+        this.db = createClient({
+            socket: { port: REDIS_PORT, host: "127.0.0.1" },
+        })
+
+        this.db.connect()
     }
 
     async onStart() {
@@ -25,20 +29,12 @@ export class Database_1_0_0 {
         this.db.setNX("disabledTabs", "")
     }
 
-    async option_get(key: string) {
-        if (await this.db.exists(key)) {
-            return this.db.get(key)
-        }
-
-        return null
-    }
-
     async getSettings(): Promise<Settings> {
         let [allowedUsers, proximityChat, discordToken, disabledTabs] =
             await Promise.all([
-                this.option_get("allowedUsers"),
+                this.db.get("allowedUsers"),
                 this.db.get("proximityChat"),
-                this.option_get("discordToken"),
+                this.db.get("discordToken"),
                 this.db.get("disabledTabs"),
             ])
 
@@ -47,7 +43,7 @@ export class Database_1_0_0 {
                 allowedUsers == null ? null : JSON.parse(allowedUsers),
             proximityChat: proximityChat != "false",
             discordToken: discordToken,
-            disabledTabs: disabledTabs.split("/"),
+            disabledTabs: (disabledTabs ?? "").split("/"),
         }
     }
 
@@ -133,10 +129,9 @@ export class Database_1_0_0 {
         }
     }
 
-    async addPage(data: Page) {
-        let newId = (await this.db.incr("pages_id_inc")).toString()
-
-        let key = "page_" + newId
+    async addPage(data: Page & { id: string }) {
+        let key = "page_" + data.id
+        console.log(key, data)
 
         await Promise.all([
             this.db.hSet(key, ["ordinal", data.ordinal.toString()]),
@@ -144,7 +139,7 @@ export class Database_1_0_0 {
             this.db.hSet(key, ["data", data.data]),
         ])
 
-        await this.db.sAdd("pages", newId)
+        await this.db.sAdd("pages", data.id)
     }
 
     async createUser(username: string, password: string) {
