@@ -82,4 +82,4 @@ export async function installFabric(dir?: string, options?: {}) {
     await runFabricInstaller()
 }
 
-installFabric()
+// installFabric()

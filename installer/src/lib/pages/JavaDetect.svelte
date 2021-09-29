@@ -1,8 +1,11 @@
 <script lang="ts">
-	export let javaInfo;
-	(async () => {
-		javaInfo = await (await fetch('http://localhost:3000/api/java-info')).text();
-	})();
+    import { onMount } from 'svelte'
+    let javaInfo;
+    
+    onMount(async () => {
+        javaInfo = await (await fetch('/api/java-info')).text()
+        console.log(javaInfo)
+    })
 </script>
 
 <div class="flex">

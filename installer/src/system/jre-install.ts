@@ -1,11 +1,11 @@
-import { spawn } from "child_process"
-import process from "process"
+// import { spawn } from "child_process"
+// import process from "process"
 import fs from "fs"
-import { writeFile } from "fs/promises"
+// import { writeFile } from "fs/promises"
 import got from "got"
 import path from "path"
 import os from "os"
-import { createGunzip } from "zlib"
+// import { createGunzip } from "zlib"
 
 function getOS() {
     const platform = os.type()
@@ -44,7 +44,7 @@ export async function getLatestJavaInstaller(): Promise<void> {
 
     if (!downloadStream) throw Error("Java runtime not found for your system")
     const writeStream = fs.createWriteStream(path.resolve("./java"))
-    const unzip = createGunzip()
+    // const unzip = createGunzip()
 
     downloadStream.pipe(writeStream)
 
